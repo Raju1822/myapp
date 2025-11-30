@@ -26,6 +26,8 @@ const MemberDashboard = () => {
     years_of_experience: ""
   });
 
+const [tasks, setTasks] = useState([]);
+
   useEffect(() => {
     fetch(`http://localhost:5000/api/user-skills/${user.EmployeeId}`)
       .then((res) => res.json())
@@ -34,6 +36,12 @@ const MemberDashboard = () => {
     fetch("http://localhost:5000/api/skills")
       .then((res) => res.json())
       .then((data) => setAllSkills(data));
+
+fetch(`http://localhost:5000/api/tasks/${user.EmployeeId}`)
+      .then((res) => res.json())
+      .then((data) => setTasks(data))
+      .catch((err) => console.error("Error fetching tasks:", err));
+
   }, [user.EmployeeId]);
 
   const handleChange = (e) => {
@@ -120,6 +128,24 @@ const MemberDashboard = () => {
 
 
 
+
+
+// Update task status
+  const updateTaskStatus = async (taskId, status) => {
+    const progress = status === "Completed" ? 100 : status === "In Progress" ? 50 : 0;
+    try {
+      await fetch(`http://localhost:5000/api/update-task-status/${taskId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status, progress_percent: progress })
+      });
+      // Update UI without reload
+      setTasks(tasks.map(t => t.task_id === taskId ? { ...t, status, progress_percent: progress } : t));
+    } catch (error) {
+      console.error("Error updating task:", error);
+      alert("Failed to update task status.");
+    }
+  };
 
 
 
@@ -281,206 +307,265 @@ const MemberDashboard = () => {
 
 
 
-<div className="col-md-12">
-  <div className="card shadow-lg border-0">
-    <div className="card-header bg-primary text-white text-center">
-      <h4 className="mb-0">Your Skills</h4>
-    </div>
 
-    {/* Skills Table */}
-    <div className="table-responsive">
-      <table className="table table-striped table-hover align-middle">
-        <thead className="table-primary">
-          <tr>
-            <th>#</th>
-            <th>Skill Name</th>
-            <th>Proficiency</th>
-            <th>Progress</th>
-            <th>Certificate</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {skills.map((skill, index) => {
-            let barColor = "bg-danger";
-            if (skill.proficiency_percent >= 80) barColor = "bg-success";
-            else if (skill.proficiency_percent >= 50) barColor = "bg-warning";
+      <div className="card shadow-lg border-0">
+        <div className="card-header bg-primary text-white text-center">
+          <h4 className="mb-0">Your Skills</h4>
 
-            return (
-              <tr key={index}>
-                <td>{index + 1}</td>
-                <td className="fw-bold">{skill.skill_name}</td>
-                <td>{skill.proficiency_percent}%</td>
-                <td style={{ width: "150px" }}>
-                  <div className="progress" style={{ height: "8px" }}>
-                    <div
-                      className={`progress-bar ${barColor}`}
-                      role="progressbar"
-                      style={{ width: `${skill.proficiency_percent}%` }}
-                      aria-valuenow={skill.proficiency_percent}
-                      aria-valuemin="0"
-                      aria-valuemax="100"
-                    ></div>
-                  </div>
-                </td>
-                <td>
-                  {skill.certificate && skill.certificate.trim() !== "" ? (
-                    <a
-                      href={skill.certificate}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn btn-sm btn-outline-primary"
-                    >
-                      View Certificate
-                    </a>
-                  ) : (
-                    <span className="text-muted small">No certificate</span>
-                  )}
-                </td>
-                <td>
-                  <div className="d-flex justify-content-between">
-                    <button
-                      className="btn btn-sm btn-outline-warning"
-                      data-bs-toggle="modal"
-                      data-bs-target="#skillModal"
-                      onClick={() => handleEditSkill(skill)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="btn btn-sm btn-outline-danger"
-                      onClick={() => handleDeleteSkill(skill)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
 
-    {/* Footer with Add Skill Button */}
-    <div className="card-footer text-center">
-      <button
-        className="btn btn-primary"
-        data-bs-toggle="modal"
-        data-bs-target="#skillModal"
-        onClick={() => {
-          setFormData({
-            skill_id: "",
-            proficiency_percent: "",
-            certificate: "",
-            years_of_experience: ""
-          });
-          setIsEditing(false);
-        }}
-      >
-        <i className="bi bi-plus-circle me-2"></i> Add Skill
-      </button>
-    </div>
-  </div>
 
-  {/* Bootstrap Modal */}
-  <div
-    className="modal fade"
-    id="skillModal"
-    tabIndex="-1"
-    aria-labelledby="skillModalLabel"
-    aria-hidden="true"
-  >
-    <div className="modal-dialog modal-lg">
-      <div className="modal-content">
-        <div className="modal-header bg-primary text-white">
-          <h5 className="modal-title" id="skillModalLabel">
-            {isEditing ? "Update Skill" : "Add Skill"}
-          </h5>
-          <button
-            type="button"
-            className="btn-close"
-            data-bs-dismiss="modal"
-            aria-label="Close"
-          ></button>
-        </div>
-        <div className="modal-body">
-          <form onSubmit={handleAddSkill}>
-            {/* Skill Dropdown */}
-            <div className="mb-3">
-              <label className="form-label fw-bold">Select Skill</label>
-              <select
-                name="skill_id"
-                className="form-control"
-                value={formData.skill_id}
-                onChange={handleChange}
-                required
+
+
+
+
+          <div className="btn-actions-pane-right">
+            <div role="group" className="btn-group-sm btn-group mr-2">
+
+              <button
+                className="btn btn-primary"
+                data-bs-toggle="modal"
+                data-bs-target="#skillModal"
+                onClick={() => {
+                  setFormData({
+                    skill_id: "",
+                    proficiency_percent: "",
+                    certificate: "",
+                    years_of_experience: ""
+                  });
+                  setIsEditing(false);
+                }}
               >
-                <option value="">-- Choose a Skill --</option>
-                {allSkills.map((skill) => (
-                  <option key={skill.skill_id} value={skill.skill_id}>
-                    {skill.skill_name}
-                  </option>
-                ))}
-              </select>
-            </div>
+                <i className="bi bi-plus-circle me-2"></i> Add Skill
+              </button>
 
-            {/* Proficiency */}
-            <div className="mb-3">
-              <label className="form-label fw-bold">Proficiency (%)</label>
-              <input
-                type="number"
-                name="proficiency_percent"
-                className="form-control"
-                value={formData.proficiency_percent}
-                onChange={handleChange}
-                min="0"
-                max="100"
-                placeholder="Enter proficiency (0-100)"
-                required
-              />
             </div>
+          </div>
 
-            {/* Certificate URL */}
-            <div className="mb-3">
-              <label className="form-label fw-bold">Certificate URL</label>
-              <input
-                type="url"
-                name="certificate"
-                className="form-control"
-                value={formData.certificate}
-                onChange={handleChange}
-                placeholder="Paste certificate link"
-              />
-            </div>
 
-            {/* Years of Experience */}
-            <div className="mb-3">
-              <label className="form-label fw-bold">Years of Experience</label>
-              <input
-                type="number"
-                name="years_of_experience"
-                className="form-control"
-                value={formData.years_of_experience}
-                onChange={handleChange}
-                placeholder="Enter years of experience"
-              />
-            </div>
 
-            {/* Submit Button */}
-            <button type="submit" className="btn btn-primary w-100">
-              <i className="bi bi-check-circle me-2"></i>
-              {isEditing ? "Update Skill" : "Add Skill"}
-            </button>
-          </form>
+        </div>
+
+        {/* Skills Table */}
+        <div className="table-responsive">
+          <table className="table table-striped table-hover align-middle">
+            <thead className="table-primary">
+              <tr>
+                <th>#</th>
+                <th>Skill Name</th>
+                <th>Proficiency</th>
+                <th>Progress</th>
+                <th className="text-center">Certificate</th>
+                <th className="text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {skills.map((skill, index) => {
+                let barColor = "bg-danger";
+                if (skill.proficiency_percent >= 80) barColor = "bg-success";
+                else if (skill.proficiency_percent >= 50) barColor = "bg-warning";
+
+                return (
+                  <tr key={index}>
+                    <td>{index + 1}</td>
+                    <td className="fw-bold">{skill.skill_name}</td>
+                    <td>{skill.proficiency_percent}%</td>
+                    <td style={{ width: "150px" }}>
+                      <div className="progress" style={{ height: "8px" }}>
+                        <div
+                          className={`progress-bar ${barColor}`}
+                          role="progressbar"
+                          style={{ width: `${skill.proficiency_percent}%` }}
+                          aria-valuenow={skill.proficiency_percent}
+                          aria-valuemin="0"
+                          aria-valuemax="100"
+                        ></div>
+                      </div>
+                    </td>
+                    <td className="text-center">
+                      {skill.certificate && skill.certificate.trim() !== "" ? (
+                        <a
+                          href={skill.certificate}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-sm btn-outline-primary"
+                        >
+                          View Certificate
+                        </a>
+                      ) : (
+                        <span className="text-muted small">No certificate</span>
+                      )}
+                    </td>
+                    <td>
+                      <div className="d-flex justify-content-between">
+                        <button
+                          className="btn btn-sm btn-outline-warning"
+                          data-bs-toggle="modal"
+                          data-bs-target="#skillModal"
+                          onClick={() => handleEditSkill(skill)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="btn btn-sm btn-outline-danger"
+                          onClick={() => handleDeleteSkill(skill)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Footer with Add Skill Button */}
+        <div className="card-footer text-center">
+          <br></br>
         </div>
       </div>
+
+      {/* Bootstrap Modal */}
+      <div
+        className="modal fade"
+        id="skillModal"
+        tabIndex="-1"
+        aria-labelledby="skillModalLabel"
+        aria-hidden="true"
+      >
+        <div className="modal-dialog modal-lg">
+          <div className="modal-content">
+            <div className="modal-header bg-primary text-white">
+              <h5 className="modal-title" id="skillModalLabel">
+                {isEditing ? "Update Skill" : "Add Skill"}
+              </h5>
+              <button
+                type="button"
+                className="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div className="modal-body">
+              <form onSubmit={handleAddSkill}>
+                {/* Skill Dropdown */}
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Select Skill</label>
+                  <select
+                    name="skill_id"
+                    className="form-control"
+                    value={formData.skill_id}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">-- Choose a Skill --</option>
+                    {allSkills.map((skill) => (
+                      <option key={skill.skill_id} value={skill.skill_id}>
+                        {skill.skill_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Proficiency */}
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Proficiency (%)</label>
+                  <input
+                    type="number"
+                    name="proficiency_percent"
+                    className="form-control"
+                    value={formData.proficiency_percent}
+                    onChange={handleChange}
+                    min="0"
+                    max="100"
+                    placeholder="Enter proficiency (0-100)"
+                    required
+                  />
+                </div>
+
+                {/* Certificate URL */}
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Certificate URL</label>
+                  <input
+                    type="url"
+                    name="certificate"
+                    className="form-control"
+                    value={formData.certificate}
+                    onChange={handleChange}
+                    placeholder="Paste certificate link"
+                  />
+                </div>
+
+                {/* Years of Experience */}
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Years of Experience</label>
+                  <input
+                    type="number"
+                    name="years_of_experience"
+                    className="form-control"
+                    value={formData.years_of_experience}
+                    onChange={handleChange}
+                    placeholder="Enter years of experience"
+                  />
+                </div>
+
+                {/* Submit Button */}
+                <button type="submit" className="btn btn-primary w-100">
+                  <i className="bi bi-check-circle me-2"></i>
+                  {isEditing ? "Update Skill" : "Add Skill"}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+
+
+
+
+
+<div className="card shadow-sm p-4 mt-4">
+      <h5 className="fw-bold text-primary mb-3">Your Tasks</h5>
+      <div className="row">
+        {tasks.length === 0 ? (
+          <p>No tasks assigned yet.</p>
+        ) : (
+          tasks.map(task => (
+            <div className="col-md-4 mb-3" key={task.task_id}>
+              <div className="card p-3 shadow-sm border">
+                <h6 className="fw-bold">#00{task.task_id}</h6>
+                <h6 className="fw-bold">{task.title}</h6>
+                <p>{task.description}</p>
+                <p><strong>Due:</strong> {new Date(task.due_date).toLocaleDateString()}</p>
+                <span className={`badge ${task.priority === "High" ? "bg-danger" : task.priority === "Medium" ? "bg-warning" : "bg-success"}`}>
+                  {task.priority}
+                </span>
+                <div className="progress mt-2 mb-2">
+                  <div
+                    className="progress-bar"
+                    style={{ width: `${task.progress_percent}%` }}
+                  >
+                    {task.progress_percent}%
+                  </div>
+                </div>
+                <select
+                  value={task.status}
+                  onChange={(e) => updateTaskStatus(task.task_id, e.target.value)}
+                  className="form-select"
+                >
+                  <option>Not Started</option>
+                  <option>In Progress</option>
+                  <option>Completed</option>
+                </select>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
     </div>
-  </div>
-</div>
-
-
-
 
 
 
