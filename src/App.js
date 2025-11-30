@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Welcome from './pages/Welcome';
 import MemberDashboard from './pages/MemberDashboard';
 import ManagerDashboard from './pages/ManagerDashboard';
+import AddMember from './pages/AddMember';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Welcome />} />
         <Route path="/manager-dashboard" element={<ManagerDashboard />} />
+        <Route path="/add-member" element={<AddMember />} />
         <Route path="/member-dashboard" element={<MemberDashboard />} />
       </Routes>
     </BrowserRouter>

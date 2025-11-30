@@ -1,0 +1,222 @@
+
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+
+const AddMember = () => {
+  const navigate = useNavigate();
+
+  const [formData, setFormData] = useState({
+    EmployeeId: "",
+    firstname: "",
+    lastname: "",
+    email: "",
+    password: "",
+    post: "",
+    location: "",
+    doj: "",
+    role: "member"
+  });
+
+  const designations = [
+    "Data Analyst",
+    "Software Engineer",
+    "Business Analyst",
+    "Project Manager",
+    "UI Designer",
+    "QA Engineer",
+    "DevOps Engineer",
+    "HR Executive",
+    "Team Lead",
+    "Scrum Master",
+    "Product Owner",
+    "Data Scientist"
+  ];
+
+  const locations = [
+    "Gurugram",
+    "Mumbai",
+    "Bangalore",
+    "Delhi",
+    "Hyderabad",
+    "Pune",
+    "Chennai",
+    "Kolkata"
+  ];
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch("http://localhost:5000/api/add-member", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        alert("✅ Member added successfully!");
+        navigate("/manager-dashboard");
+      } else {
+        alert("❌ Failed: " + result.message);
+      }
+    } catch (error) {
+      console.error("Error adding member:", error);
+      alert("Server error occurred.");
+    }
+  };
+
+  const handleCancel = () => {
+    navigate("/manager-dashboard");
+  };
+
+  return (
+    <div className="container mt-4">
+      <div className="card shadow-lg">
+        <div className="card-header bg-primary text-white text-center">
+          <h4>Add New Member</h4>
+        </div>
+        <div className="card-body">
+          <form onSubmit={handleSubmit}>
+            {/* Employee ID */}
+            <div className="mb-3">
+              <label className="form-label fw-bold">Employee ID</label>
+              <input
+                type="text"
+                name="EmployeeId"
+                className="form-control"
+                placeholder="Enter Employee ID"
+                value={formData.EmployeeId}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            {/* First & Last Name */}
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label fw-bold">First Name</label>
+                <input
+                  type="text"
+                  name="firstname"
+                  className="form-control"
+                  placeholder="Enter First Name"
+                  value={formData.firstname}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label fw-bold">Last Name</label>
+                <input
+                  type="text"
+                  name="lastname"
+                  className="form-control"
+                  placeholder="Enter Last Name"
+                  value={formData.lastname}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Email */}
+            <div className="mb-3">
+              <label className="form-label fw-bold">Email</label>
+              <input
+                type="email"
+                name="email"
+                className="form-control"
+                placeholder="Enter Email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            {/* Password */}
+            <div className="mb-3">
+              <label className="form-label fw-bold">Password</label>
+              <input
+                type="password"
+                name="password"
+                className="form-control"
+                placeholder="Enter Password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            {/* Designation Dropdown */}
+            <div className="mb-3">
+              <label className="form-label fw-bold">Designation</label>
+              <select
+                name="post"
+                className="form-control"
+                value={formData.post}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select Designation</option>
+                {designations.map((d, index) => (
+                  <option key={index} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Location Dropdown */}
+            <div className="mb-3">
+              <label className="form-label fw-bold">Location</label>
+              <select
+                name="location"
+                className="form-control"
+                value={formData.location}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select Location</option>
+                {locations.map((loc, index) => (
+                  <option key={index} value={loc}>
+                    {loc}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Date of Joining */}
+            <div className="mb-3">
+              <label className="form-label fw-bold">Date of Joining</label>
+              <input
+                type="date"
+                name="doj"
+                className="form-control"
+                value={formData.doj}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            {/* Buttons */}
+            <div className="d-flex justify-content-between mt-4">
+              <button type="submit" className="btn btn-primary px-4">
+                ✅ Submit
+              </button>
+              <button type="button" className="btn btn-secondary px-4" onClick={handleCancel}>
+                ❌ Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AddMember;

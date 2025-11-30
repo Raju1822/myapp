@@ -1,7 +1,55 @@
-
-// import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
 
 const ManagerDashboard = () => {
+
+
+  //Get loggedin user data
+  const user = JSON.parse(localStorage.getItem('loggedInUser'));
+
+  //For logout 
+  const navigate = useNavigate();
+  
+  const handleLogout = () => {
+    localStorage.removeItem('loggedInUser'); // ✅ Clear user data
+    navigate('/'); // ✅ Redirect to login page
+  };
+
+
+  //user details
+
+  const [members, setMembers] = useState([]);
+  useEffect(() => {
+    fetch('http://localhost:5000/api/members')
+      .then(response => response.json())
+      .then(data => setMembers(data))
+      .catch(error => console.error('Error fetching members:', error));
+  }, []);
+
+
+
+
+
+  //get badge color
+
+  const badgeColors = {
+    "data analyst": "badge-info",
+    "data analyst 2": "badge-secondary",
+    "project manager": "badge-success",
+    "software engineer": "badge-primary",
+    "qa engineer": "badge-warning",
+    "data scientist": "badge-danger",
+    "business analyst": "badge-dark",
+    "product owner": "badge-light",
+    "devops engineer": "badge-info",
+    "ui designer": "badge-success" // custom class if you have it
+  };
+
+
+  //Details of member 
+
+  const [selectedMember, setSelectedMember] = useState(null);
+
   // const [showForm, setShowForm] = useState(false);
   // const [member, setMember] = useState({ name: '', email: '', role: '' });
 
@@ -11,18 +59,15 @@ const ManagerDashboard = () => {
   //   setMember({ ...member, [e.target.name]: e.target.value });
   // };
 
-  // const handleSubmit = (e) => {
-  //   e.preventDefault();
-  //   console.log('New Member Added:', member);
-  //   // TODO: Integrate with backend API: axios.post('/users', member)
-  //   setMember({ name: '', email: '', role: '' });
-  //   setShowForm(false);
-  // };
+
 
   return (
 
 
     <div style={{ fontFamily: 'Arial, sans-serif', padding: '20px' }}>
+
+
+
 
       <div class="app-container app-theme-white body-tabs-shadow fixed-sidebar fixed-header">
         <div class="app-header header-shadow">
@@ -93,7 +138,7 @@ const ManagerDashboard = () => {
                     <div class="widget-content-left">
                       <div class="btn-group">
                         <button data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="p-0 btn">
-                          <img width="42" class="rounded-circle" src="https://picsum.photos/100/100" alt="" />
+                          <img width="42" class="rounded-circle" src={user?.profile_picture} alt="" ></img>
                           <i class="fa fa-angle-down ml-2 opacity-8"></i>
                         </button>
                         <div tabindex="-1" role="menu" aria-hidden="true" class="dropdown-menu dropdown-menu-right">
@@ -103,15 +148,18 @@ const ManagerDashboard = () => {
                           <button type="button" tabindex="0" class="dropdown-item">Actions</button>
                           <div tabindex="-1" class="dropdown-divider"></div>
                           <button type="button" tabindex="0" class="dropdown-item">Dividers</button>
+
+                          <button type="button" tabindex="0" class="dropdown-item" onClick={handleLogout}>Logout</button>
+
                         </div>
                       </div>
                     </div>
                     <div class="widget-content-left  ml-3 header-user-info">
                       <div class="widget-heading">
-                        Alina Mclourd
+                        Hi, {user?.firstname}!
                       </div>
                       <div class="widget-subheading">
-                        VP People Manager
+                        {user?.post}
                       </div>
                     </div>
                     <div class="widget-content-right header-user-info ml-3">
@@ -436,22 +484,30 @@ const ManagerDashboard = () => {
                 </button>
               </span>
             </div>
+
+
+
+
             <div class="scrollbar-sidebar">
               <div class="app-sidebar__inner">
                 <ul class="vertical-nav-menu">
                   <li class="app-sidebar__heading">Dashboards</li>
                   <li>
                     <a href="index.html" class="mm-active">
-                      <i class="metismenu-icon pe-7s-rocket"></i>
+                      <i class="fa fa-rocket"></i>
                       Dashboard Example 1
                     </a>
                   </li>
                   <li class="app-sidebar__heading">UI Components</li>
                   <li>
                     <a href="/">
-                      <i class="metismenu-icon pe-7s-diamond"></i>
+
+
+                      <i class="fa fa-diamond"></i>
+
+
                       Elements
-                      <i class="metismenu-state-icon pe-7s-angle-down caret-left"></i>
+                      <i class="fa fa-angle-down"></i>
                     </a>
                     <ul>
                       <li>
@@ -506,9 +562,11 @@ const ManagerDashboard = () => {
                   </li>
                   <li>
                     <a href="/">
-                      <i class="metismenu-icon pe-7s-car"></i>
+                      <i class="fa fa-car"></i>
                       Components
-                      <i class="metismenu-state-icon pe-7s-angle-down caret-left"></i>
+
+                      <i class="fa fa-angle-down"></i>
+
                     </a>
                     <ul>
                       <li>
@@ -581,62 +639,61 @@ const ManagerDashboard = () => {
                   </li>
                   <li>
                     <a href="tables-regular.html">
-                      <i class="metismenu-icon pe-7s-display2"></i>
+                      <i class="fa fa-desktop"></i>
                       Tables
                     </a>
                   </li>
                   <li class="app-sidebar__heading">Widgets</li>
                   <li>
                     <a href="dashboard-boxes.html">
-                      <i class="metismenu-icon pe-7s-display2"></i>
+                      <i class="fa fa-desktop"></i>
                       Dashboard Boxes
                     </a>
                   </li>
                   <li class="app-sidebar__heading">Forms</li>
                   <li>
                     <a href="forms-controls.html">
-                      <i class="metismenu-icon pe-7s-mouse">
+                      <i class="fa fa-keyboard-o">
                       </i>Forms Controls
                     </a>
                   </li>
                   <li>
                     <a href="forms-layouts.html">
-                      <i class="metismenu-icon pe-7s-eyedropper">
+                      <i class="fa fa-eyedropper">
                       </i>Forms Layouts
                     </a>
                   </li>
                   <li>
                     <a href="forms-validation.html">
-                      <i class="metismenu-icon pe-7s-pendrive">
-                      </i>Forms Validation
+                      <i class="fa fa-hdd-o"></i>Forms Validation
                     </a>
                   </li>
                   <li class="app-sidebar__heading">Charts</li>
                   <li>
                     <a href="charts-chartjs.html">
-                      <i class="metismenu-icon pe-7s-graph2">
+                      <i class="fa fa-line-chart">
                       </i>ChartJS
                     </a>
                   </li>
-                  <li class="app-sidebar__heading">PRO Version</li>
-                  <li>
-                    <a href="https://dashboardpack.com/theme-details/architectui-dashboard-html-pro/" >
-                      <i class="metismenu-icon pe-7s-graph2">
-                      </i>
-                      Upgrade to PRO
-                    </a>
-                  </li>
+
                 </ul>
               </div>
             </div>
+
+
+
           </div>
+
+
+
           <div class="app-main__outer">
             <div class="app-main__inner">
               <div class="app-page-title">
                 <div class="page-title-wrapper">
                   <div class="page-title-heading">
                     <div class="page-title-icon">
-                      <i class="pe-7s-car icon-gradient bg-mean-fruit">
+
+                      <i class="fa fa-car icon-gradient bg-mean-fruit">
                       </i>
                     </div>
                     <div>Analytics Dashboard
@@ -651,7 +708,7 @@ const ManagerDashboard = () => {
                     <div class="d-inline-block dropdown">
                       <button type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="btn-shadow dropdown-toggle btn btn-info">
                         <span class="btn-icon-wrapper pr-2 opacity-7">
-                          <i class="fa fa-business-time fa-w-20"></i>
+                          <i class="fa fa-briefcase"></i>
                         </span>
                         Buttons
                       </button>
@@ -1081,137 +1138,171 @@ const ManagerDashboard = () => {
                 </div>
               </div>
               <div class="row">
-                <div class="col-md-12">
-                  <div class="main-card mb-3 card">
-                    <div class="card-header">Active Users
-                      <div class="btn-actions-pane-right">
-                        <div role="group" class="btn-group-sm btn-group">
-                          <button class="active btn btn-focus">Last Week</button>
-                          <button class="btn btn-focus">All Month</button>
+
+
+
+
+
+                <div className="col-md-12">
+                  <div className="main-card mb-3 card">
+                    <div className="card-header">
+                      Active Users
+                      <div className="btn-actions-pane-right">
+                        <div role="group" className="btn-group-sm btn-group mr-2">
+                          <button className="active btn btn-focus">   <a className="active btn btn-focus" href="/add-member">Add Members</a></button>
+
                         </div>
                       </div>
                     </div>
-                    <div class="table-responsive">
-                      <table class="align-middle mb-0 table table-borderless table-striped table-hover">
+                    <div className="table-responsive">
+                      <table className="align-middle mb-0 table table-borderless table-striped table-hover">
                         <thead>
                           <tr>
-                            <th class="text-center">#</th>
+                            {/* <th className="text-center">#</th>  */}
+                            <th className="text-center">Employee ID</th>
+                            <th className="text-center">Profile Picture</th>
                             <th>Name</th>
-                            <th class="text-center">City</th>
-                            <th class="text-center">Status</th>
-                            <th class="text-center">Actions</th>
+                            {/* <th className="text-center">Employee ID</th> */}
+                            {/* <th className="text-center">Post</th> */}
+                            <th className="text-center">Location</th>
+                            {/* <th className="text-center">Email</th> */}
+                            <th className="text-center">Role</th>
+                            {/* <th className="text-center">Date of Joining</th> */}
+                            <th className="text-center">Actions</th>
                           </tr>
                         </thead>
                         <tbody>
-                          <tr>
-                            <td class="text-center text-muted">#345</td>
-                            <td>
-                              <div class="widget-content p-0">
-                                <div class="widget-content-wrapper">
-                                  <div class="widget-content-left mr-3">
-                                    <div class="widget-content-left">
-                                      <img width="40" class="rounded-circle" src="assets/images/avatars/4.jpg" alt="" />
+                          {members.map((user, index) => (
+                            <tr key={index}>
+                              <td className="text-center text-muted">{user.EmployeeId}</td>
+                              <td className="text-center"> <img
+                                width="40"
+                                className="rounded-circle"
+                                src={user.profile_picture || "https://picsum.photos/100"}
+                                Name="widget-heading" alt="" />
+                              </td>
+                              <td>
+                                <div className="widget-content p-0">
+                                  <div className="widget-content-wrapper">
+                                    <div className="widget-content-left mr-3">
+
+                                      <div className="widget-content-left" >
+                                        {user.firstname} {user.lastname} </div>
+                                      <div className="widget-subheading opacity-7">{user.email}</div>
+
+
+
+
+
+
+
+
                                     </div>
                                   </div>
-                                  <div class="widget-content-left flex2">
-                                    <div class="widget-heading">John Doe</div>
-                                    <div class="widget-subheading opacity-7">Web Developer</div>
-                                  </div>
                                 </div>
-                              </div>
-                            </td>
-                            <td class="text-center">Madrid</td>
-                            <td class="text-center">
-                              <div class="badge badge-warning">Pending</div>
-                            </td>
-                            <td class="text-center">
-                              <button type="button" id="PopoverCustomT-1" class="btn btn-primary btn-sm">Details</button>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td class="text-center text-muted">#347</td>
-                            <td>
-                              <div class="widget-content p-0">
-                                <div class="widget-content-wrapper">
-                                  <div class="widget-content-left mr-3">
-                                    <div class="widget-content-left">
-                                      <img width="40" class="rounded-circle" src="assets/images/avatars/3.jpg" alt="" />
-                                    </div>
-                                  </div>
-                                  <div class="widget-content-left flex2">
-                                    <div class="widget-heading">Ruben Tillman</div>
-                                    <div class="widget-subheading opacity-7">Etiam sit amet orci eget</div>
-                                  </div>
+                              </td>
+                              {/* <td className="text-center">{user.EmployeeId}</td>
+              <td className="text-center">{user.post}</td> */}
+                              <td className="text-center">{user.location}</td>
+                              {/* <td className="text-center">{user.email}</td> */}
+                              <td className="text-center">
+
+
+
+
+
+                                <div
+                                  className={`badge ${badgeColors[user.post.toLowerCase()] || "badge-dark"}`}
+                                >
+                                  {user.post}
                                 </div>
-                              </div>
-                            </td>
-                            <td class="text-center">Berlin</td>
-                            <td class="text-center">
-                              <div class="badge badge-success">Completed</div>
-                            </td>
-                            <td class="text-center">
-                              <button type="button" id="PopoverCustomT-2" class="btn btn-primary btn-sm">Details</button>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td class="text-center text-muted">#321</td>
-                            <td>
-                              <div class="widget-content p-0">
-                                <div class="widget-content-wrapper">
-                                  <div class="widget-content-left mr-3">
-                                    <div class="widget-content-left">
-                                      <img width="40" class="rounded-circle" src="assets/images/avatars/2.jpg" alt="" />
-                                    </div>
-                                  </div>
-                                  <div class="widget-content-left flex2">
-                                    <div class="widget-heading">Elliot Huber</div>
-                                    <div class="widget-subheading opacity-7">Lorem ipsum dolor sic</div>
-                                  </div>
-                                </div>
-                              </div>
-                            </td>
-                            <td class="text-center">London</td>
-                            <td class="text-center">
-                              <div class="badge badge-danger">In Progress</div>
-                            </td>
-                            <td class="text-center">
-                              <button type="button" id="PopoverCustomT-3" class="btn btn-primary btn-sm">Details</button>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td class="text-center text-muted">#55</td>
-                            <td>
-                              <div class="widget-content p-0">
-                                <div class="widget-content-wrapper">
-                                  <div class="widget-content-left mr-3">
-                                    <div class="widget-content-left">
-                                      <img width="40" class="rounded-circle" src="assets/images/avatars/1.jpg" alt="" />
-                                    </div>
-                                  </div>
-                                  <div class="widget-content-left flex2">
-                                    <div class="widget-heading">Vinnie Wagstaff</div>
-                                    <div class="widget-subheading opacity-7">UI Designer</div>
-                                  </div>
-                                </div>
-                              </div>
-                            </td>
-                            <td class="text-center">Amsterdam</td>
-                            <td class="text-center">
-                              <div class="badge badge-info">On Hold</div>
-                            </td>
-                            <td class="text-center">
-                              <button type="button" id="PopoverCustomT-4" class="btn btn-primary btn-sm">Details</button>
-                            </td>
-                          </tr>
+
+
+
+
+
+
+
+
+                              </td>
+                              {/* <td className="text-center">
+                                {new Date(user.doj).toLocaleDateString()}
+                              </td> */}
+                              <td className="text-center">
+                                <button type="button" className="btn btn-primary btn-sm" onClick={() => setSelectedMember(user)}>
+                                  Details
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
                         </tbody>
                       </table>
                     </div>
-                    <div class="d-block text-center card-footer">
-                      <button class="mr-2 btn-icon btn-icon-only btn btn-outline-danger"><i class="pe-7s-trash btn-icon-wrapper"> </i></button>
-                      <button class="btn-wide btn btn-success">Save</button>
+                    <div className="d-block text-center card-footer">
+                      <button className="mr-2 btn-icon btn-icon-only btn btn-outline-danger">
+                        <i className="fa fa-trash btn-icon-wrapper"></i>
+                      </button>
+                      <button className="btn-wide btn btn-success">Save</button>
                     </div>
                   </div>
                 </div>
+
+
+
+
+
+
+
+
+                {selectedMember && (
+                  <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)", padding: "100px" }}>
+                    <div className="modal-dialog modal-lg">
+                      <div className="modal-content">
+                        <div className="modal-header bg-primary text-white">
+                          <h5 className="modal-title">Member Details</h5>
+                          <button type="button" className="btn-close" onClick={() => setSelectedMember(null)}></button>
+                        </div>
+                        <div className="modal-body" >
+                          <div className="text-center mb-3">
+                            <img
+                              src={selectedMember.profile_picture || "https://picsum.photos/100"}
+                              alt="Profile"
+                              className="rounded-circle"
+                              width="80"
+                            />
+                          </div>
+                          <p><strong>Employee ID:</strong> {selectedMember.EmployeeId}</p>
+                          <p><strong>Name:</strong> {selectedMember.firstname} {selectedMember.lastname}</p>
+                          <p><strong>Email:</strong> {selectedMember.email}</p>
+                          <p><strong>Designation:</strong> {selectedMember.post}</p>
+                          <p><strong>Location:</strong> {selectedMember.location}</p>
+                          <p><strong>Date of Joining:</strong> {new Date(selectedMember.doj).toLocaleDateString()}</p>
+
+
+
+                          <p>
+                            <strong>Year of Experience:</strong>{" "}
+                            {(() => {
+                              const today = new Date();
+                              const doj = new Date(selectedMember.doj);
+                              const diffInMs = today - doj; // difference in milliseconds
+                              const diffInYears = Math.floor(diffInMs / (1000 * 60 * 60 * 24 * 365));
+                              return diffInYears;
+                            })()}
+                          </p>
+
+                        </div>
+                        <div className="modal-footer">
+                          <button className="btn btn-secondary" onClick={() => setSelectedMember(null)}>Close</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+
+
+
               </div>
               <div class="row">
                 <div class="col-md-6 col-lg-3">

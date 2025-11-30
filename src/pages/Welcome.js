@@ -26,6 +26,10 @@ const handleLogin = async (e) => {
         const data = await response.json();
 
         if (data.success) {
+           
+       // Save user in localStorage
+            localStorage.setItem('loggedInUser', JSON.stringify(data.user));
+
             if (data.user.role === 'manager') {
                 navigate('/manager-dashboard');
             } else {
