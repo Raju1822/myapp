@@ -8,6 +8,7 @@ import Welcome from './pages/Welcome';
 import MemberDashboard from './pages/MemberDashboard';
 import ManagerDashboard from './pages/ManagerDashboard';
 import AddMember from './pages/AddMember';
+import Dashboard from './pages/Dashboard';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
         <Route path="/manager-dashboard" element={<ManagerDashboard />} />
         <Route path="/add-member" element={<AddMember />} />
         <Route path="/member-dashboard" element={<MemberDashboard />} />
+        <Route path="/dashboard" element={<Dashboard/>}/>
       </Routes>
     </BrowserRouter>
       </header>

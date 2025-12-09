@@ -30,10 +30,13 @@ const handleLogin = async (e) => {
        // Save user in localStorage
             localStorage.setItem('loggedInUser', JSON.stringify(data.user));
 
-            if (data.user.role === 'manager') {
-                navigate('/manager-dashboard');
-            } else {
+            if (data.user.level === 2) {
+                // navigate('/manager-dashboard');
+                navigate('/dashboard')
+            } else if (data.user.level === 3){
                 navigate('/member-dashboard');
+            } else if (data.user.level === 1){
+              navigate('/dashboard')
             }
         } else {
             alert('Invalid email or password');
