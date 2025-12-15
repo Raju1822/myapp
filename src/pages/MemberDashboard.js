@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 
 
 
+
 const MemberDashboard = () => {
   const user = JSON.parse(localStorage.getItem("loggedInUser"));
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ const MemberDashboard = () => {
     years_of_experience: ""
   });
 
-const [tasks, setTasks] = useState([]);
+  const [tasks, setTasks] = useState([]);
 
   useEffect(() => {
     fetch(`http://localhost:5000/api/user-skills/${user.EmployeeId}`)
@@ -37,7 +38,7 @@ const [tasks, setTasks] = useState([]);
       .then((res) => res.json())
       .then((data) => setAllSkills(data));
 
-fetch(`http://localhost:5000/api/tasks/${user.EmployeeId}`)
+    fetch(`http://localhost:5000/api/tasks/${user.EmployeeId}`)
       .then((res) => res.json())
       .then((data) => setTasks(data))
       .catch((err) => console.error("Error fetching tasks:", err));
@@ -48,6 +49,14 @@ fetch(`http://localhost:5000/api/tasks/${user.EmployeeId}`)
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+
+  const [manager, setManager] = useState([]);
+  useEffect(() => {
+    fetch(`http://localhost:5000/api/manager/${user.EmployeeId}`)
+      .then((res) => res.json())
+      .then((data) => setManager(data));
+
+  });
 
 
   //Handle edit and add skills
@@ -130,7 +139,7 @@ fetch(`http://localhost:5000/api/tasks/${user.EmployeeId}`)
 
 
 
-// Update task status
+  // Update task status
   const updateTaskStatus = async (taskId, status) => {
     const progress = status === "Completed" ? 100 : status === "In Progress" ? 50 : 0;
     try {
@@ -148,6 +157,51 @@ fetch(`http://localhost:5000/api/tasks/${user.EmployeeId}`)
   };
 
 
+  //Show Members hierarchy
+
+const [members, setMembers] = useState([]);
+
+
+const ShowMembers = async () => {
+  if (!user?.EmployeeId) return;
+  try {
+    const res = await fetch(`http://localhost:5000/api/directmembers/${user.mapped_to}`);
+    const data = await res.json();
+    const list = Array.isArray(data) ? data : (data?.data || []);
+    setMembers(list);
+
+    // Show Bootstrap modal
+    const modal = new window.bootstrap.Modal(document.getElementById('membersModal'));
+    modal.show();
+  } catch (err) {
+    console.error('Error fetching members:', err);
+    setMembers([]);
+  }
+};
+
+
+
+
+//Take Exam
+
+const handleTakeExam = (skill) => {
+  if (!skill?.skill_id) {
+    alert('Skill id is missing. Please update your /api/user-skills query to include s.skill_id.');
+    return;
+  }
+  navigate('/skill-exam', {
+    state: { skillId: skill.skill_id, skillName: skill.skill_name }
+  });
+};
+
+
+const [selectedCertificate, setSelectedCertificate] = useState(null);
+
+const handleLeave = () => {
+   
+    navigate("/LeaveManager");
+  };
+
 
   return (
     <div className="container mt-4">
@@ -161,16 +215,154 @@ fetch(`http://localhost:5000/api/tasks/${user.EmployeeId}`)
       <div className="card shadow-lg mb-4">
         <div className="card-body text-center">
           <img
-            src={user?.profile_picture || "https://picsum.photos/100"}
+            src={user?.profile_picture_url || "https://picsum.photos/100"}
             alt="Profile"
             className="rounded-circle mb-3"
             width="100"
           />
           <h4 className="fw-bold">{user?.firstname} {user?.lastname}</h4>
-          <p className="text-muted">{user?.email}</p>
-          <span className="badge bg-info">{user?.role}</span>
+          <p className="text">{user?.email}</p>
+          {/* <button className="btn badge btn-primary ml-3 text-white" onClick={ShowMembers}>{user?.role}</button> */}
 
-          <span className="badge bg-danger ml-3 text-white" onClick={handleLogout}> Logout</span>
+
+
+
+
+<button
+  type="button" class="btn btn-outline-info m-3"
+  onClick={ShowMembers}
+>
+  {user?.role || 'Members'}
+</button>
+
+
+
+
+
+<div className="modal fade" id="membersModal" tabIndex="-1" aria-hidden="true">
+  <div className="modal-dialog modal-dialog-centered modal-lg">
+    <div className="modal-content">
+      <div className="modal-header">
+        <h5 className="modal-title">Team Members of {user?.firstname} {user?.lastname}</h5>
+        <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+
+      {/* <div className="modal-body">
+        {members.length === 0 ? (
+          <p>No members found.</p>
+        ) : (
+          <ul className="list-group">
+            {members.map(m => (
+              <li key={m.EmployeeId} className="list-group-item d-flex align-items-center">
+                <img
+                  src={m.profile_picture
+                    ? `http://localhost:5000/uploads/${encodeURIComponent(m.profile_picture)}`
+                    : 'https://avatar.iran.liara.run/public'}
+                  alt="Profile"
+                  class ="rounded-circle me-2"
+                  width="40"
+                  height="40"
+                />
+                <div>
+                  <strong>{m.firstname} {m.lastname}</strong><br />
+                  <small>{m.role} · {m.post}</small>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div> */}
+
+
+      
+<div className="modal-body">
+  {members.length === 0 ? (
+    <p className="text-muted">No members found.</p>
+  ) : (
+    <div className="text-center">
+      {/* Manager node */}
+      <div className="d-inline-flex align-items-center gap-2 p-2 border rounded bg-light">
+        <img
+          src={
+            manager[0]?.profile_picture
+              ? `http://localhost:5000/uploads/${encodeURIComponent(user.profile_picture)}`
+              : 'https://avatar.iran.liara.run/public'
+          }
+          alt="Manager"
+          className="rounded-circle"
+          width="40"
+          height="40"
+          style={{ objectFit: 'cover' }}
+        />
+        <div className="text-start">
+          <div className="fw-semibold">{manager[0]?.firstname} {manager[0]?.lastname}</div>
+          <div className="text-muted small">{manager[0]?.role} · {manager[0]?.post}</div>
+        </div>
+      </div>
+
+      {/* Connector line */}
+      <div className="mx-auto my-2" style={{ width: 2, height: 16, background: '#dee2e6' }} />
+
+      {/* Direct reports row */}
+      <div className="row g-3 justify-content-center">
+        {members.map(m => (
+          <div key={m.EmployeeId} className="col-12 col-sm-6 col-md-4 col-lg-3">
+            <div className="card h-100 shadow-sm">
+              <div className="card-body">
+                <div className="d-flex align-items-center gap-2 mb-2">
+                  <img
+                    src={
+                      m.profile_picture
+                        ? `http://localhost:5000/uploads/${encodeURIComponent(m.profile_picture)}`
+                        : 'https://avatar.iran.liara.run/public'
+                    }
+                    alt="Profile"
+                    className="rounded-circle"
+                    width="36"
+                    height="36"
+                    style={{ objectFit: 'cover' }}
+                  />
+                  <div>
+                    <div className="fw-semibold small">{m.firstname} {m.lastname}</div>
+                    <div className="text-muted small"> {m.post}</div>
+                  </div>
+                </div>
+
+                {/* Optional meta row
+                {m.location && <div className="text-muted small">📍 {m.location}</div>}
+                {m.doj && (
+                  <div className="text-muted small">
+                    🗓 Joined: {new Date(m.doj).toLocaleDateString()}
+                  </div>
+                )} */}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
+</div>
+
+
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+          <button type="button" class="btn btn-outline-danger" onClick={handleLogout}> Logout</button>
 
 
 
@@ -381,21 +573,32 @@ fetch(`http://localhost:5000/api/tasks/${user.EmployeeId}`)
                         ></div>
                       </div>
                     </td>
-                    <td className="text-center">
-                      {skill.certificate && skill.certificate.trim() !== "" ? (
-                        <a
-                          href={skill.certificate}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn btn-sm btn-outline-primary"
-                        >
-                          View Certificate
-                        </a>
-                      ) : (
-                        <span className="text-muted small">No certificate</span>
-                      )}
-                    </td>
-                    <td>
+
+
+
+
+                    
+<td className="text-center">
+  {skill.certificate && skill.certificate.trim() !== "" ? (
+    <>
+      <button
+        className="btn btn-sm btn-outline-primary"
+        data-bs-toggle="modal"
+        data-bs-target="#certificateModal"
+        onClick={() => setSelectedCertificate(skill.certificate)}
+      >
+        View Certificate
+      </button>
+    </>
+  ) : (
+    <span className="text-muted small">No certificate</span>
+  )}
+</td>
+
+
+
+
+                    {/* <td>
                       <div className="d-flex justify-content-between">
                         <button
                           className="btn btn-sm btn-outline-warning"
@@ -412,13 +615,100 @@ fetch(`http://localhost:5000/api/tasks/${user.EmployeeId}`)
                           Delete
                         </button>
                       </div>
-                    </td>
+                    </td> */}
+
+
+
+
+
+                    
+<td>
+  <div className="d-flex justify-content-between">
+    <button
+      className="btn btn-sm btn-outline-warning"
+      data-bs-toggle="modal"
+      data-bs-target="#skillModal"
+      onClick={() => handleEditSkill(skill)}
+    >
+      Edit
+    </button>
+    <button
+      className="btn btn-sm btn-outline-danger"
+      onClick={() => handleDeleteSkill(skill)}
+    >
+      Delete
+    </button>
+    <button
+      className="btn btn-sm btn-outline-primary"
+      onClick={() => handleTakeExam(skill)}
+      title="Take Exam"
+    >
+      Take Exam
+    </button>
+  </div>
+</td>
+
+
+
+
+
+
+
+
                   </tr>
                 );
               })}
             </tbody>
           </table>
         </div>
+
+
+
+<div
+  className="modal fade"
+  id="certificateModal"
+  tabIndex="-1"
+  aria-labelledby="certificateModalLabel"
+  aria-hidden="true"
+>
+  <div className="modal-dialog modal-lg">
+    <div className="modal-content">
+      <div className="modal-header">
+        <h5 className="modal-title" id="certificateModalLabel">Certificate Preview</h5>
+        <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div className="modal-body">
+        {selectedCertificate ? (
+          
+<iframe title="Certificate"
+  src={`https://docs.google.com/viewer?url=${selectedCertificate}&embedded=true`}
+  style={{ width: '100%', height: '500px', border: 'none' }}
+></iframe>
+
+        ) : (
+          <p>No certificate selected</p>
+        )}
+      </div>
+      <div className="modal-footer">
+        {selectedCertificate && (
+          <a
+            href={selectedCertificate}
+            download
+            className="btn btn-success"
+          >
+            Download
+          </a>
+        )}
+        <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
 
         {/* Footer with Add Skill Button */}
         <div className="card-footer text-center">
@@ -527,47 +817,80 @@ fetch(`http://localhost:5000/api/tasks/${user.EmployeeId}`)
 
 
 
-<div className="card shadow-sm p-4 mt-4">
-      <h5 className="fw-bold text-primary mb-3">Your Tasks</h5>
-      <div className="row">
-        {tasks.length === 0 ? (
-          <p>No tasks assigned yet.</p>
-        ) : (
-          tasks.map(task => (
-            <div className="col-md-4 mb-3" key={task.task_id}>
-              <div className="card p-3 shadow-sm border">
-                <h6 className="fw-bold">#00{task.task_id}</h6>
-                <h6 className="fw-bold">{task.title}</h6>
-                <p>{task.description}</p>
-                <p><strong>Due:</strong> {new Date(task.due_date).toLocaleDateString()}</p>
-                <span className={`badge ${task.priority === "High" ? "bg-danger" : task.priority === "Medium" ? "bg-warning" : "bg-success"}`}>
-                  {task.priority}
-                </span>
-                <div className="progress mt-2 mb-2">
-                  <div
-                    className="progress-bar"
-                    style={{ width: `${task.progress_percent}%` }}
-                  >
-                    {task.progress_percent}%
+      <div className="card shadow-sm p-4 mt-4">
+        <h5 className="fw-bold text-primary mb-3">Your Tasks</h5>
+        <div className="row">
+          {tasks.length === 0 ? (
+            <p>No tasks assigned yet.</p>
+          ) : (
+            tasks.map(task => (
+              <div className="col-md-4 mb-3" key={task.task_id}>
+                <div className="card p-3 shadow-sm border">
+                  <h6 className="fw-bold">#00{task.task_id}</h6>
+                  <h6 className="fw-bold">{task.title}</h6>
+                  <p>{task.description}</p>
+                  <p><strong>Due:</strong> {new Date(task.due_date).toLocaleDateString()}</p>
+                  <span className={`badge ${task.priority === "High" ? "bg-danger" : task.priority === "Medium" ? "bg-warning" : "bg-success"}`}>
+                    {task.priority}
+                  </span>
+                  <div className="progress mt-2 mb-2">
+                    <div
+                      className="progress-bar"
+                      style={{ width: `${task.progress_percent}%` }}
+                    >
+                      {task.progress_percent}%
+                    </div>
                   </div>
+                  <select
+                    value={task.status}
+                    onChange={(e) => updateTaskStatus(task.task_id, e.target.value)}
+                    className="form-select"
+                  >
+                    <option>Not Started</option>
+                    <option>In Progress</option>
+                    <option>Completed</option>
+                  </select>
                 </div>
-                <select
-                  value={task.status}
-                  onChange={(e) => updateTaskStatus(task.task_id, e.target.value)}
-                  className="form-select"
-                >
-                  <option>Not Started</option>
-                  <option>In Progress</option>
-                  <option>Completed</option>
-                </select>
               </div>
-            </div>
-          ))
-        )}
+            ))
+          )}
+        </div>
       </div>
+
+
+
+
+
+
+ <div className="card shadow-sm p-4 mt-4">
+        <h5 className="fw-bold text-primary mb-3">Leave Management</h5>
+
+
+
+         <div className="btn-actions-pane-right">
+            <div role="group" className="btn-group-sm btn-group mr-2">
+
+              <button
+                className="btn btn-primary"
+             
+               onClick = {handleLeave}
+              >
+                <i className="bi bi-plus-circle me-2"></i> Apply Leave
+              </button>
+
+            </div>
+          </div>
+
+      <div className="row">
+        <div className="col-md-6 mb-4">
+         
+        </div>
+        <div className="col-md-6 mb-4">
+          
+        </div>
+      </div>
+      
     </div>
-
-
 
 
 

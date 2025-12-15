@@ -9,6 +9,9 @@ import MemberDashboard from './pages/MemberDashboard';
 import ManagerDashboard from './pages/ManagerDashboard';
 import AddMember from './pages/AddMember';
 import Dashboard from './pages/Dashboard';
+import Exam from './pages/Exam';
+import QuestionManager from './pages/QuestionManager';
+import LeaveManager from './pages/LeaveManager';
 
 function App() {
   return (
@@ -21,6 +24,9 @@ function App() {
         <Route path="/add-member" element={<AddMember />} />
         <Route path="/member-dashboard" element={<MemberDashboard />} />
         <Route path="/dashboard" element={<Dashboard/>}/>
+           <Route path="/skill-exam" element={<Exam/>}/>
+            <Route path="/QuestionManager" element={<QuestionManager/>}/>
+            <Route path="/LeaveManager" element={<LeaveManager/>}/>
       </Routes>
     </BrowserRouter>
       </header>
