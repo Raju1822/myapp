@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom'
-
 export default function QuestionManager() {
   const [skills, setSkills] = useState([]);
   const [selectedSkill, setSelectedSkill] = useState('');
@@ -11,13 +10,11 @@ export default function QuestionManager() {
   const [questionsPerPage] = useState(5); // Show 5 questions per page
   const [newQuestion, setNewQuestion] = useState({ text: '', difficulty: 'Easy', options: [{ text: '', is_correct: false }] });
   const [editingQuestion, setEditingQuestion] = useState(null);
-
   useEffect(() => {
     fetch('http://localhost:5000/api/skills')
       .then(res => res.json())
       .then(data => setSkills(data));
   }, []);
-
   useEffect(() => {
     if (selectedSkill) {
       fetch(`http://localhost:5000/api/questions/${selectedSkill}`)
@@ -28,7 +25,6 @@ export default function QuestionManager() {
         });
     }
   }, [selectedSkill]);
-
   // Search filter
   useEffect(() => {
     const filtered = questions.filter(q =>
@@ -37,25 +33,20 @@ export default function QuestionManager() {
     setFilteredQuestions(filtered);
     setCurrentPage(1); // Reset to first page on search
   }, [searchTerm, questions]);
-
   // Pagination logic
   const indexOfLastQuestion = currentPage * questionsPerPage;
   const indexOfFirstQuestion = indexOfLastQuestion - questionsPerPage;
   const currentQuestions = filteredQuestions.slice(indexOfFirstQuestion, indexOfLastQuestion);
   const totalPages = Math.ceil(filteredQuestions.length / questionsPerPage);
-
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
   const addOptionField = () => {
     setNewQuestion(prev => ({ ...prev, options: [...prev.options, { text: '', is_correct: false }] }));
   };
-
   const handleOptionChange = (index, field, value) => {
     const updatedOptions = [...newQuestion.options];
     updatedOptions[index][field] = value;
     setNewQuestion(prev => ({ ...prev, options: updatedOptions }));
   };
-
   const handleAddQuestion = () => {
     const payload = {
       skill_id: parseInt(selectedSkill),
@@ -63,7 +54,6 @@ export default function QuestionManager() {
       difficulty: newQuestion.difficulty,
       options: newQuestion.options.map(opt => ({ option_text: opt.text, is_correct: opt.is_correct }))
     };
-
     fetch('http://localhost:5000/api/questions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -76,7 +66,6 @@ export default function QuestionManager() {
         refreshQuestions();
       });
   };
-
   const refreshQuestions = () => {
     fetch(`http://localhost:5000/api/questions/${selectedSkill}`)
       .then(res => res.json())
@@ -85,7 +74,6 @@ export default function QuestionManager() {
         setFilteredQuestions(data);
       });
   };
-
   const handleDeleteQuestion = (id) => {
     fetch(`http://localhost:5000/api/questions/${id}`, { method: 'DELETE' })
       .then(() => {
@@ -93,11 +81,9 @@ export default function QuestionManager() {
         setQuestions(questions.filter(q => q.question_id !== id));
       });
   };
-
   const startEditQuestion = (q) => {
     setEditingQuestion({ ...q });
   };
-
   const handleUpdateQuestion = () => {
     fetch(`http://localhost:5000/api/questions/${editingQuestion.question_id}`, {
       method: 'PATCH',
@@ -112,7 +98,6 @@ export default function QuestionManager() {
       refreshQuestions();
     });
   };
-
   const handleOptionUpdate = (optionId, text, isCorrect) => {
     fetch(`http://localhost:5000/api/options/${optionId}`, {
       method: 'PATCH',
@@ -123,18 +108,13 @@ export default function QuestionManager() {
       refreshQuestions();
     });
   };
-
-
   //BAck to dashboard
   const navigate = useNavigate();
   const goback = () => {
     navigate('/dashboard');
   };
-
   return (
     <div className="container mt-4">
-
-
       <div class="row d-flex justify-content-between">
         <div class="col-auto">
           <h3 className="">Manage Questions</h3>
@@ -143,24 +123,12 @@ export default function QuestionManager() {
           <button className="btn btn-warning btn-sm ms-2" onClick={() => goback()}>Close Question Manager</button>
         </div>
       </div>
-
-
-
-
-
       <select className="form-select mb-3" onChange={(e) => setSelectedSkill(e.target.value)}>
         <option value="">Select Skill</option>
         {skills.map(skill => (
           <option key={skill.skill_id} value={skill.skill_id}>{skill.skill_name}</option>
         ))}
       </select>
-
-
-
-
-
-
-
           <h5 className="card p-1 mt-4 text-center bg-info" >Add New Question</h5>
           <input className="form-control mb-2" placeholder="Question text" value={newQuestion.text} onChange={(e) => setNewQuestion(prev => ({ ...prev, text: e.target.value }))} />
           <select className="form-select mb-2" value={newQuestion.difficulty} onChange={(e) => setNewQuestion(prev => ({ ...prev, difficulty: e.target.value }))}>
@@ -174,9 +142,6 @@ export default function QuestionManager() {
               <input type="checkbox" checked={opt.is_correct} onChange={(e) => handleOptionChange(index, 'is_correct', e.target.checked)} /> Correct
             </div>
           ))}
-
-
-
           <div class="row d-flex justify-content-between">
             <div class="col-auto">
               <button className="btn btn-secondary mb-2" onClick={addOptionField}>Add Option</button>
@@ -185,19 +150,7 @@ export default function QuestionManager() {
               <button className="btn btn-success" onClick={handleAddQuestion}>Save Question</button>
             </div>
           </div>
-
-
-
 <hr className="m-5"></hr>
-
-
-
-
-
-
-
-
-
       {selectedSkill && (
         <>
           <input
@@ -207,20 +160,7 @@ export default function QuestionManager() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-
           <h4>Questions for {skills.find(s => s.skill_id === selectedSkill)?.skill_name}</h4>
-
-
-
-
-
-
-
-
-
-
-
-
           {currentQuestions.map(q => (
             <div key={q.question_id} className="border p-2 mb-2">
               {editingQuestion && editingQuestion.question_id === q.question_id ? (
@@ -259,7 +199,6 @@ export default function QuestionManager() {
               </ul>
             </div>
           ))}
-
           {/* Pagination */}
           <nav>
             <ul className="pagination">
@@ -270,12 +209,6 @@ export default function QuestionManager() {
               ))}
             </ul>
           </nav>
-
-
-
-
-
-
         </>
       )}
     </div>

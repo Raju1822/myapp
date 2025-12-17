@@ -1,27 +1,17 @@
 import { useNavigate } from 'react-router-dom';
 import React, { useEffect, useState, useRef } from 'react';
-
 import { Chart, registerables } from "chart.js";
 Chart.register(...registerables);
-
-
 const ManagerDashboard = () => {
-
-
   //Get loggedin user data
   const user = JSON.parse(localStorage.getItem('loggedInUser'));
-
-  //For logout 
+  //For logout
   const navigate = useNavigate();
-
   const handleLogout = () => {
     localStorage.removeItem('loggedInUser'); // ✅ Clear user data
     navigate('/'); // ✅ Redirect to login page
   };
-
-
   //user details
-
   const [members, setMembers] = useState([]);
   useEffect(() => {
     fetch('http://localhost:5000/api/members')
@@ -29,13 +19,7 @@ const ManagerDashboard = () => {
       .then(data => setMembers(data))
       .catch(error => console.error('Error fetching members:', error));
   }, []);
-
-
-
-
-
   //get badge color
-
   const badgeColors = {
     "data analyst": "badge-info",
     "data analyst 2": "badge-secondary",
@@ -48,31 +32,18 @@ const ManagerDashboard = () => {
     "devops engineer": "badge-info",
     "ui designer": "badge-success" // custom class if you have it
   };
-
-
-  //Details of member 
-
+  //Details of member
   const [selectedMember, setSelectedMember] = useState(null);
-
   // const [showForm, setShowForm] = useState(false);
   // const [member, setMember] = useState({ name: '', email: '', role: '' });
-
   // const handleAddMemberClick = () => setShowForm(!showForm);
-
   // const handleChange = (e) => {
   //   setMember({ ...member, [e.target.name]: e.target.value });
   // };
-
-
   //Task
   //  const [members, setMembers] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [showModal, setShowModal] = useState(false);
-
-
-
-
-
   const [isEditing, setIsEditing] = useState(false);
   const [taskData, setTaskData] = useState({
     task_id: null,
@@ -83,11 +54,7 @@ const ManagerDashboard = () => {
     due_date: "",
     priority: "Medium"
   });
-
-
-
   // Fetch tasks assigned by manager
-
   useEffect(() => {
     const fetchTasks = async () => {
       const res = await fetch(`http://localhost:5000/api/manager-tasks/${user.EmployeeId}`);
@@ -96,26 +63,19 @@ const ManagerDashboard = () => {
     };
     fetchTasks();
   }, [user.EmployeeId]);
-
-
   const fetchTasks = async () => {
     const res = await fetch(`http://localhost:5000/api/manager-tasks/${user.EmployeeId}`);
     const data = await res.json();
     setTasks(data);
   };
-
-
-
   const handleTaskChange = (e) => {
     setTaskData({ ...taskData, [e.target.name]: e.target.value });
   };
-
   const handleAddTaskClick = () => {
     setIsEditing(false);
     setTaskData({ task_id: null, title: "", description: "", assigned_to: "", start_date: "", due_date: "", priority: "Medium" });
     setShowModal(true);
   };
-
   const handleEditTaskClick = (task) => {
     setIsEditing(true);
     setTaskData({
@@ -129,32 +89,24 @@ const ManagerDashboard = () => {
     });
     setShowModal(true);
   };
-
   const handleSubmitTask = async (e) => {
     e.preventDefault();
     const url = isEditing
       ? `http://localhost:5000/api/update-task/${taskData.task_id}`
       : "http://localhost:5000/api/add-task";
-
     const method = isEditing ? "PATCH" : "POST";
-
     const payload = { ...taskData, assigned_by: user.EmployeeId };
-
     const response = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
-
     const result = await response.json();
     alert(result.message);
     setShowModal(false);
     fetchTasks();
   };
-
-
   //Delete task
-
   const handleDeleteTask = async (taskId) => {
     if (window.confirm("Are you sure you want to delete this task?")) {
       try {
@@ -170,29 +122,20 @@ const ManagerDashboard = () => {
       }
     }
   };
-
-
   //Bar charts
-
-
   const chartRef = useRef(null);
-
 useEffect(() => {
   if (tasks.length > 0 && members.length > 0) {
     if (chartRef.current) chartRef.current.destroy();
-
     const memberTaskCount = {};
     tasks.forEach(task => {
       memberTaskCount[task.assigned_to] = (memberTaskCount[task.assigned_to] || 0) + 1;
     });
-
     const labels = Object.keys(memberTaskCount).map(empId => {
       const member = members.find(m => m.EmployeeId === empId);
       return member ? `${member.firstname} ${member.lastname}` : empId;
     });
-
     const data = Object.values(memberTaskCount);
-
     // Dynamic colors based on task count
     const colors = data.map(count => {
       if (count <= 2) return "rgba(75, 192, 75, 0.7)"; // Green
@@ -200,7 +143,6 @@ useEffect(() => {
       if (count <= 9) return "rgba(54, 162, 235, 0.7)"; // Blue
       return "rgba(255, 99, 132, 0.7)"; // Red
     });
-
     const ctx = document.getElementById("canvas").getContext("2d");
     chartRef.current = new Chart(ctx, {
       type: "bar",
@@ -239,18 +181,8 @@ useEffect(() => {
     });
   }
 }, [tasks, members]);
-
-
-
-
   return (
-
-
     <div style={{ fontFamily: 'Arial, sans-serif', padding: '20px' }}>
-
-
-
-
       <div class="app-container app-theme-white body-tabs-shadow fixed-sidebar fixed-header">
         <div class="app-header header-shadow">
           <div class="app-header__logo">
@@ -283,7 +215,6 @@ useEffect(() => {
               </button>
             </span>
           </div>
-
           <div class="app-header__content">
             <div class="app-header-left">
               <div class="search-wrapper">
@@ -316,9 +247,6 @@ useEffect(() => {
             </div>
             <div class="app-header-right">
               <div class="header-btn-lg pr-0">
-
-
-
                 <div className="widget-content p-0">
                   <div className="widget-content-wrapper d-flex align-items-center">
                     {/* Left Section - User Dropdown */}
@@ -350,13 +278,11 @@ useEffect(() => {
                         </ul>
                       </div>
                     </div>
-
                     {/* Middle Section - User Info */}
                     <div className="widget-content-left ms-3 header-user-info">
                       <div className="widget-heading">Hi, {user?.firstname}!</div>
                       <div className="widget-subheading">{user?.post}</div>
                     </div>
-
                     {/* Right Section - Calendar Button */}
                     <div className="widget-content-right header-user-info ms-3">
                       <button type="button" className="btn btn-primary btn-sm p-1">
@@ -364,21 +290,10 @@ useEffect(() => {
                       </button>
                     </div>
                   </div>
-
-
                 </div>
               </div>
             </div>
           </div>
-
-
-
-
-
-
-
-
-
         </div>
         <div class="ui-theme-settings">
           <button type="button" id="TooltipDemo" class="btn-open-options btn btn-warning">
@@ -691,10 +606,6 @@ useEffect(() => {
                 </button>
               </span>
             </div>
-
-
-
-
             <div class="scrollbar-sidebar">
               <div class="app-sidebar__inner">
                 <ul class="vertical-nav-menu">
@@ -708,11 +619,7 @@ useEffect(() => {
                   <li class="app-sidebar__heading">UI Components</li>
                   <li>
                     <a href="/">
-
-
                       <i class="fa fa-diamond"></i>
-
-
                       Elements
                       <i class="fa fa-angle-down"></i>
                     </a>
@@ -771,9 +678,7 @@ useEffect(() => {
                     <a href="/">
                       <i class="fa fa-car"></i>
                       Components
-
                       <i class="fa fa-angle-down"></i>
-
                     </a>
                     <ul>
                       <li>
@@ -882,24 +787,16 @@ useEffect(() => {
                       </i>ChartJS
                     </a>
                   </li>
-
                 </ul>
               </div>
             </div>
-
-
-
           </div>
-
-
-
           <div class="app-main__outer">
             <div class="app-main__inner">
               <div class="app-page-title">
                 <div class="page-title-wrapper">
                   <div class="page-title-heading">
                     <div class="page-title-icon">
-
                       <i class="fa fa-car icon-gradient bg-mean-fruit">
                       </i>
                     </div>
@@ -961,9 +858,6 @@ useEffect(() => {
                   </div>
                 </div>
               </div>
-
-
-
 <div className="row">
   {/* Card 1: Total Tasks */}
   <div className="col-md-6 col-xl-4">
@@ -981,7 +875,6 @@ useEffect(() => {
       </div>
     </div>
   </div>
-
   {/* Card 2: Total Members */}
   <div className="col-md-6 col-xl-4">
     <div className="card mb-3 widget-content bg-arielle-smile">
@@ -998,7 +891,6 @@ useEffect(() => {
       </div>
     </div>
   </div>
-
   {/* Card 3: Completed Tasks */}
   <div className="col-md-6 col-xl-4">
     <div className="card mb-3 widget-content bg-grow-early">
@@ -1020,14 +912,7 @@ useEffect(() => {
     </div>
   </div>
 </div>
-
-
-
-
-
               <div class="row">
-
-
                 <div class="col-md-12 col-lg-6">
                   <div class="mb-3 card">
                     <div class="card-header-tab card-header-tab-animation card-header">
@@ -1044,34 +929,17 @@ useEffect(() => {
                       <div class="tab-content">
                         <div class="tab-pane fade show active" id="tabs-eg-77">
                           <div class="card mb-3 widget-chart widget-chart2 text-left w-100">
-
-
-
-
-
-
                             <div class="widget-chat-wrapper-outer">
                               <div class="widget-chart-wrapper widget-chart-wrapper-lg opacity-10 m-0">
                                 <canvas id="canvas"></canvas>
                               </div>
                             </div>
-
-
-
-
-
-
-
                           </div>
-
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-
-
-
                 <div class="col-md-12 col-lg-6">
                   <div class="mb-3 card">
                     <div class="card-header-tab card-header">
@@ -1257,11 +1125,6 @@ useEffect(() => {
                 </div>
               </div>
               <div class="row">
-
-
-
-
-
                 <div className="col-md-12">
                   <div className="main-card mb-3 card">
                     <div className="card-header">
@@ -1269,7 +1132,6 @@ useEffect(() => {
                       <div className="btn-actions-pane-right">
                         <div role="group" className="btn-group-sm btn-group mr-2">
                           <button className="active btn btn-focus">   <a className="active btn btn-focus" href="/add-member">Add Members</a></button>
-
                         </div>
                       </div>
                     </div>
@@ -1304,18 +1166,9 @@ useEffect(() => {
                                 <div className="widget-content p-0">
                                   <div className="widget-content-wrapper">
                                     <div className="widget-content-left mr-3">
-
                                       <div className="widget-content-left" >
                                         {user.firstname} {user.lastname} </div>
                                       <div className="widget-subheading opacity-7">{user.email}</div>
-
-
-
-
-
-
-
-
                                     </div>
                                   </div>
                                 </div>
@@ -1325,24 +1178,11 @@ useEffect(() => {
                               <td className="text-center">{user.location}</td>
                               {/* <td className="text-center">{user.email}</td> */}
                               <td className="text-center">
-
-
-
-
-
                                 <div
                                   className={`badge ${badgeColors[user.post.toLowerCase()] || "badge-dark"}`}
                                 >
                                   {user.post}
                                 </div>
-
-
-
-
-
-
-
-
                               </td>
                               {/* <td className="text-center">
                                 {new Date(user.doj).toLocaleDateString()}
@@ -1365,14 +1205,6 @@ useEffect(() => {
                     </div>
                   </div>
                 </div>
-
-
-
-
-
-
-
-
                 {selectedMember && (
                   <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)", padding: "100px" }}>
                     <div className="modal-dialog modal-lg">
@@ -1396,9 +1228,6 @@ useEffect(() => {
                           <p><strong>Designation:</strong> {selectedMember.post}</p>
                           <p><strong>Location:</strong> {selectedMember.location}</p>
                           <p><strong>Date of Joining:</strong> {new Date(selectedMember.doj).toLocaleDateString()}</p>
-
-
-
                           <p>
                             <strong>Year of Experience:</strong>{" "}
                             {(() => {
@@ -1409,7 +1238,6 @@ useEffect(() => {
                               return diffInYears;
                             })()}
                           </p>
-
                         </div>
                         <div className="modal-footer">
                           <button className="btn btn-secondary" onClick={() => setSelectedMember(null)}>Close</button>
@@ -1418,10 +1246,6 @@ useEffect(() => {
                     </div>
                   </div>
                 )}
-
-
-
-
               </div>
               <div class="row">
                 <div class="col-md-6 col-lg-3">
@@ -1510,13 +1334,7 @@ useEffect(() => {
                 </div>
               </div>
             </div>
-
-
-
-
-
             <div className="m-4">
-
               {/* Task List */}
               <div className="card shadow-sm p-3 mb-4">
                 <div className="d-flex justify-content-between align-items-center mb-3">
@@ -1549,19 +1367,16 @@ useEffect(() => {
                             </span>
                           </td>
                           <td>{new Date(task.due_date).toLocaleDateString()}</td>
-
                           <td>
                             <button className="btn btn-sm btn-info me-2" onClick={() => handleEditTaskClick(task)}>Edit</button>
                             <button className="btn btn-sm btn-danger" onClick={() => handleDeleteTask(task.task_id)}>Delete</button>
                           </td>
-
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 )}
               </div>
-
               {/* Modal for Add/Edit Task */}
               {showModal && (
                 <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
@@ -1618,18 +1433,6 @@ useEffect(() => {
                 </div>
               )}
             </div>
-
-
-
-
-
-
-
-
-
-
-
-
             <div class="app-wrapper-footer">
               <div class="app-footer">
                 <div class="app-footer__inner">
@@ -1668,39 +1471,9 @@ useEffect(() => {
               </div>
             </div>
           </div>
-
         </div>
       </div>
-
-
-
-
-
-
-
-
-
-
-
-
     </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   );
 };
-
 export default ManagerDashboard;

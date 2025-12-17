@@ -1,11 +1,8 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 const AddMember = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('loggedInUser'));
-
   const [formData, setFormData] = useState({
     EmployeeId: "",
     firstname: "",
@@ -18,39 +15,31 @@ const AddMember = () => {
     role: "member",
     mapped_to: user.EmployeeId // ✅ Automatically set manager/director ID
   });
-
   const [profilePicture, setProfilePicture] = useState(null);
-
   const designations = [
     "Data Analyst", "Software Engineer", "Business Analyst", "Project Manager",
     "UI Designer", "QA Engineer", "DevOps Engineer", "HR Executive",
     "Team Lead", "Scrum Master", "Product Owner", "Data Scientist"
   ];
-
   const locations = [
     "Gurugram", "Mumbai", "Bangalore", "Delhi", "Hyderabad", "Pune", "Chennai", "Kolkata"
   ];
-
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-
   const handleFileChange = (e) => {
     setProfilePicture(e.target.files[0]);
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const data = new FormData();
       Object.keys(formData).forEach(key => data.append(key, formData[key]));
       if (profilePicture) data.append('profile_picture', profilePicture);
-
       const response = await fetch("http://localhost:5000/api/add-member", {
         method: "POST",
         body: data
       });
-
       const result = await response.json();
       if (result.success) {
         alert("✅ Member added successfully!");
@@ -63,11 +52,9 @@ const AddMember = () => {
       alert("Server error occurred.");
     }
   };
-
   const handleCancel = () => {
     navigate("/dashboard");
   };
-
   return (
     <div className="container mt-4">
       <div className="card shadow-lg">
@@ -82,7 +69,6 @@ const AddMember = () => {
               <input type="text" name="EmployeeId" className="form-control"
                 value={formData.EmployeeId} onChange={handleChange} required />
             </div>
-
             {/* First & Last Name */}
             <div className="row">
               <div className="col-md-6 mb-3">
@@ -96,21 +82,18 @@ const AddMember = () => {
                   value={formData.lastname} onChange={handleChange} required />
               </div>
             </div>
-
             {/* Email */}
             <div className="mb-3">
               <label className="form-label fw-bold">Email</label>
               <input type="email" name="email" className="form-control"
                 value={formData.email} onChange={handleChange} required />
             </div>
-
             {/* Password */}
             <div className="mb-3">
               <label className="form-label fw-bold">Password</label>
               <input type="password" name="password" className="form-control"
                 value={formData.password} onChange={handleChange} required />
             </div>
-
             {/* Role Dropdown */}
             <div className="mb-3">
               <label className="form-label fw-bold">Role</label>
@@ -120,7 +103,6 @@ const AddMember = () => {
                 <option value="manager">Manager</option>
               </select>
             </div>
-
             {/* Designation Dropdown */}
             <div className="mb-3">
               <label className="form-label fw-bold">Designation</label>
@@ -132,7 +114,6 @@ const AddMember = () => {
                 ))}
               </select>
             </div>
-
             {/* Location Dropdown */}
             <div className="mb-3">
               <label className="form-label fw-bold">Location</label>
@@ -144,21 +125,18 @@ const AddMember = () => {
                 ))}
               </select>
             </div>
-
             {/* Date of Joining */}
             <div className="mb-3">
               <label className="form-label fw-bold">Date of Joining</label>
               <input type="date" name="doj" className="form-control"
                 value={formData.doj} onChange={handleChange} required />
             </div>
-
             {/* Profile Picture Upload */}
             <div className="mb-3">
               <label className="form-label fw-bold">Profile Picture</label>
               <input type="file" className="form-control" accept="image/*"
                 onChange={handleFileChange} />
             </div>
-
             {/* Buttons */}
             <div className="d-flex justify-content-between mt-4">
               <button type="submit" className="btn btn-primary px-4">✅ Submit</button>
@@ -170,5 +148,4 @@ const AddMember = () => {
     </div>
   );
 };
-
 export default AddMember;

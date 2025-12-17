@@ -1,24 +1,14 @@
-
-
-
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom'
-
-const MemberLeaveDashboard = () => {
+const LeaveManager = () => {
     const user = JSON.parse(localStorage.getItem("loggedInUser"));
-
-
-
     const [history, setHistory] = useState([]);
-
     useEffect(() => {
         fetch(`http://localhost:5000/api/leave/history/${user.EmployeeId}`)
             .then(res => res.json())
             .then(data => setHistory(data))
             .catch(err => console.error("Error fetching leave history:", err));
     }, [user]);
-
     const [leaveTypes, setLeaveTypes] = useState([]);
     const [formData, setFormData] = useState({
         leave_type_id: "",
@@ -26,18 +16,15 @@ const MemberLeaveDashboard = () => {
         end_date: "",
         reason: ""
     });
-
     useEffect(() => {
         fetch("http://localhost:5000/api/leave/types")
             .then(res => res.json())
             .then(data => setLeaveTypes(data))
             .catch(err => console.error("Error fetching leave types:", err));
     }, []);
-
     const handleChange = e => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
-
     const handleSubmit = async () => {
         const payload = { ...formData, employee_id: user.EmployeeId };
         const res = await fetch("http://localhost:5000/api/leave/apply", {
@@ -48,30 +35,22 @@ const MemberLeaveDashboard = () => {
         const data = await res.json();
         alert(data.message);
         window.location.reload(true);
-        
+
     };
-
-
     const [summary, setSummary] = useState({});
-
     useEffect(() => {
         fetch(`http://localhost:5000/api/leave/summary/${user.EmployeeId}`)
             .then(res => res.json())
             .then(data => setSummary(data))
             .catch(err => console.error("Error fetching summary:", err));
-    }, []);
-
-
-
-    const [balances, setBalances] = useState([]);
-    useEffect(() => {
-        fetch(`http://localhost:5000/api/leave/balance/${user.EmployeeId}`)
-            .then(res => res.json())
-            .then(data => setBalances(data))
-            .catch(err => console.error("Error fetching leave balance:", err));
-    }, []);
-
-
+    }, [user.EmployeeId]);
+    // const [balances, setBalances] = useState([]);
+    // useEffect(() => {
+    //     fetch(`http://localhost:5000/api/leave/balance/${user.EmployeeId}`)
+    //         .then(res => res.json())
+    //         .then(data => setBalances(data))
+    //         .catch(err => console.error("Error fetching leave balance:", err));
+    // }, [user.EmployeeId]);
     const [holiday, setHoliday] = useState([]);
     useEffect(() => {
         fetch(`http://localhost:5000/api/holidays}`)
@@ -79,8 +58,6 @@ const MemberLeaveDashboard = () => {
             .then(data => setHoliday(data))
             .catch(err => console.error("Error fetching Holiday List:", err));
     }, []);
-
-
     //BAck to dashboard
     const navigate = useNavigate();
     const goBack = () => {
@@ -89,35 +66,23 @@ const MemberLeaveDashboard = () => {
     const goBack2 = () => {
         navigate('/dashboard');
     };
-
-
-
-
-
-
 //Manger Leave Requests
 
-
- 
   const [summary2, setSummary2] = useState({});
   const [pendingLeaves, setPendingLeaves] = useState([]);
   const [selectedLeave, setSelectedLeave] = useState(null);
   const [holidays, setHolidays] = useState([]);
-
   useEffect(() => {
     fetch(`http://localhost:5000/api/leave/manager-summary/${user.EmployeeId}`)
       .then(res => res.json())
       .then(data => setSummary2(data));
-
     fetch(`http://localhost:5000/api/leave/pending/${user.EmployeeId}`)
       .then(res => res.json())
       .then(data => setPendingLeaves(data));
-
     fetch("http://localhost:5000/api/holidays")
       .then(res => res.json())
       .then(data => setHolidays(data));
   }, [user.EmployeeId]);
-
   const handleApproveReject = async (status) => {
     const res = await fetch(`http://localhost:5000/api/leave/approve/${selectedLeave.leave_id}`, {
       method: "PATCH",
@@ -129,32 +94,20 @@ const MemberLeaveDashboard = () => {
     setPendingLeaves(pendingLeaves.filter(l => l.leave_id !== selectedLeave.leave_id));
     setSelectedLeave(null);
   };
-
-
     return (
-
         <>
             {/* Header */}
             <div className="text-center m-4">
                 <h2 className="fw-bold text-primary">Leave Management Dashboard</h2>
                 <p className="text-muted">Track your leave details</p>
             </div>
-
             {/* Profile Card */}
-
-
             {user?.role === "member" ? (
                 <>
-
-
                 <div className="card shadow-lg mb-4">
-
                     <div className="row">
-
                         <div className="col-6 card-body text-left">
-
                             <h4 className="fw-bold">
-
                                 <img
                                     src={user?.profile_picture_url || "https://picsum.photos/100"}
                                     alt="Profile"
@@ -162,32 +115,16 @@ const MemberLeaveDashboard = () => {
                                     width="100"
                                 />  Hey, {user?.firstname} {user?.lastname} !
                             </h4>
-
-
-
-
-
-
-
-
-
-                            {/* 
-
+                            {/*
                                 <button
                                 type="button" class="btn btn-outline-info m-3"
                                 onClick={ShowMembers}
                                 >
                                 {user?.role || 'Members'}
                                 </button> */}
-
-
-                            {/* 
+                            {/*
                                         <button type="button" class="btn btn-outline-danger" onClick={handleLogout}> Logout</button> */}
-
-
-
                         </div>
-
                         <div className="col-6 card-body text-right">
                             <button
                                 type="button" className="btn btn-outline-warning m-3"
@@ -196,10 +133,7 @@ const MemberLeaveDashboard = () => {
                                 Back to Dashboard
                             </button>
                         </div>
-
                     </div>
-
-
                     {/* Info Grid */}
                     <div className="row p-4">
                         <div className="col-md-3 mb-3">
@@ -220,7 +154,6 @@ const MemberLeaveDashboard = () => {
                                 </div>
                             </div>
                         </div>
-
                         <div className="col-md-3 mb-3">
                             <div className="card text-center shadow-sm">
                                 <div className="card-body">
@@ -230,7 +163,6 @@ const MemberLeaveDashboard = () => {
                                 </div>
                             </div>
                         </div>
-
                         <div className="col-md-3 mb-3">
                             <div className="card text-center shadow-sm">
                                 <div className="card-body">
@@ -240,36 +172,12 @@ const MemberLeaveDashboard = () => {
                                 </div>
                             </div>
                         </div>
-
                     </div>
-
-
-
                 </div>
 
-               
-
-
-
-
-
-
-
-               
 
                     <div className="row">
-
                         <div className="col-6">
-
-
-
-
-
-
-
-
-
-
                             <div className="card shadow p-4 mt-4">
                                 <h4 className="mb-3">Leave History</h4>
                                 <table className="table table-striped">
@@ -306,18 +214,6 @@ const MemberLeaveDashboard = () => {
                                     </tbody>
                                 </table>
                             </div>
-
-
-
-
-
-
-
-
-
-
-
-
                             {/* <h4 className="mb-3">Available Leaves</h4>
                     <ul className="list-group">
                         {balances.map(b => (
@@ -327,10 +223,6 @@ const MemberLeaveDashboard = () => {
                         </li>
                         ))}
                     </ul> */}
-
-
-
-
                             <div className="card shadow p-4 mt-4">
                                 <h4 className="mb-3"> Holiday</h4>
                                 <table className="table table-striped">
@@ -339,38 +231,21 @@ const MemberLeaveDashboard = () => {
                                             <th>Sr. No.</th>
                                             <th>Type</th>
                                             <th>Date</th>
-
                                         </tr>
                                     </thead>
                                     <tbody>
-
-
                                         {holiday.map(h => (
-
                                             <tr key={h.holiday_id}>
-
-
                                                 <td>{h.holiday_id}.</td>
-
                                                 <td className="">{h.description}</td>
-
                                                 <td>{new Date(h.holiday_date).toLocaleDateString()}</td>
                                             </tr>
                                         ))}
-
                                     </tbody>
                                 </table>
-
-
                             </div>
-
-
                         </div>
-
-
-
                         <div className="col-6 card shadow p-4 mt-4">
-
                             <h4 className="mb-3">Apply for Leave</h4>
                             <div className="mb-3">
                                 <label className="form-label">Leave Type</label>
@@ -418,27 +293,16 @@ const MemberLeaveDashboard = () => {
                                 Submit Leave Request
                             </button>
                         </div>
-
                     </div>
 
-              
-
             </>
-
-
             ) : (
-
                <>
 
-               
                 <div className="card shadow-lg m-3">
-
                     <div className="row">
-
                         <div className="col-6 card-body text-left">
-
                             <h4 className="fw-bold">
-
                                 <img
                                     src={user?.profile_picture_url || "https://picsum.photos/100"}
                                     alt="Profile"
@@ -446,32 +310,16 @@ const MemberLeaveDashboard = () => {
                                     width="100"
                                 />  Hey, {user?.firstname} {user?.lastname} !
                             </h4>
-
-
-
-
-
-
-
-
-
-                            {/* 
-
+                            {/*
                                 <button
                                 type="button" class="btn btn-outline-info m-3"
                                 onClick={ShowMembers}
                                 >
                                 {user?.role || 'Members'}
                                 </button> */}
-
-
-                            {/* 
+                            {/*
                                         <button type="button" class="btn btn-outline-danger" onClick={handleLogout}> Logout</button> */}
-
-
-
                         </div>
-
                         <div className="col-6 card-body text-right">
                             <button
                                 type="button" className="btn btn-outline-primary m-3"
@@ -480,13 +328,7 @@ const MemberLeaveDashboard = () => {
                                 Back to Dashboard
                             </button>
                         </div>
-
                     </div>
-
-
-
-
-
                     {/* Info Grid */}
                     <div className="row p-4">
                         <div className="col-md-3 mb-3">
@@ -507,7 +349,6 @@ const MemberLeaveDashboard = () => {
                                 </div>
                             </div>
                         </div>
-
                         <div className="col-md-3 mb-3">
                             <div className="card text-center shadow-sm">
                                 <div className="card-body">
@@ -517,7 +358,6 @@ const MemberLeaveDashboard = () => {
                                 </div>
                             </div>
                         </div>
-
                         <div className="col-md-3 mb-3">
                             <div className="card text-center shadow-sm">
                                 <div className="card-body">
@@ -527,28 +367,11 @@ const MemberLeaveDashboard = () => {
                                 </div>
                             </div>
                         </div>
-
                     </div>
-
-
-
                 </div>
 
-
-
-
-
-
-
-
-
-
-
- 
     <div className="m-3">
-
       {/* Summary */}
-   
 
       {/* Pending Requests Table */}
       <div className="card shadow p-4 mb-4">
@@ -585,7 +408,6 @@ const MemberLeaveDashboard = () => {
           </tbody>
         </table>
       </div>
-
       {/* Holidays */}
       <div className="card shadow p-4">
         <h4 className="mb-3">Company Holidays</h4>
@@ -598,7 +420,6 @@ const MemberLeaveDashboard = () => {
           ))}
         </ul>
       </div>
-
       {/* Approve/Reject Modal */}
       <div className="modal fade" id="approveModal" tabIndex="-1">
         <div className="modal-dialog">
@@ -622,42 +443,11 @@ const MemberLeaveDashboard = () => {
         </div>
       </div>
     </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
                </>
-                
-                
+
+
                 )}
-
         </>
-
-
-
-
     );
 }
-
-
-export default MemberLeaveDashboard;
+export default LeaveManager;
