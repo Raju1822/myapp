@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import brand from '../logo.svg';
-import placeholder from '../placeholder.jpg'
+import placeholder from '../placeholder-img.jpg'
 const API_BASE_URL = 'http://localhost:5000';
 const Welcome = () => {
   const [email, setEmail] = useState('');
@@ -10,45 +10,45 @@ const Welcome = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-const handleLogin = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     try {
-        const response = await fetch(`${API_BASE_URL}/api/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
-        const data = await response.json();
-          if (!response.ok || !data?.success) {
-  const msg = data?.message || 'Invalid email or password';
-  throw new Error(msg);
-}
-        if (data.success) {
+      const response = await fetch(`${API_BASE_URL}/api/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.success) {
+        const msg = data?.message || 'Invalid email or password';
+        throw new Error(msg);
+      }
+      if (data.success) {
 
-       // Save user in localStorage
-            localStorage.setItem('loggedInUser', JSON.stringify(data.user));
-            if (data.user.level === 2) {
-                // navigate('/manager-dashboard');
-                navigate('/dashboard')
-            } else if (data.user.level === 3){
-                navigate('/member-dashboard');
-            } else if (data.user.level === 1){
-              navigate('/dashboard')
-            }
-        } else {
-            alert('Invalid email or password');
+        // Save user in localStorage
+        localStorage.setItem('loggedInUser', JSON.stringify(data.user));
+        if (data.user.level === 2) {
+           navigate('/manager-dashboard');
+          // navigate('/dashboard')
+        } else if (data.user.level === 3) {
+          navigate('/member-dashboard');
+        } else if (data.user.level === 1) {
+          navigate('/dashboard')
         }
+      } else {
+        alert('Invalid email or password');
+      }
     } catch (error) {
       console.error('Login error:', error);
       setError(error.message || 'Something went wrong. Please try again.');
     } finally {
       setSubmitting(false);
     }
-};
+  };
   return (
     <div className="min-vh-100 d-flex flex-column bg-light">
       {/* Navbar */}
-      <nav className="navbar navbar-expand-lg navbar-light bg-white border-bottom">
+      <nav className="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top">
         <div className="container">
           <a className="navbar-brand d-flex align-items-center gap-2" href="/">
             <img
@@ -93,12 +93,14 @@ const handleLogin = async (e) => {
             {/* Left: Hero */}
             <div className="col-12 col-lg-6">
               <div className="p-4 p-lg-5">
-                <h1 className="display-5 fw-bold mb-3">
+                <h1 className=" fw-bold mb-3 text-wrap">
                   Welcome to Team Productivity Dashboard
                 </h1>
                 <p className="lead text-secondary mb-4">
                   Track tasks, manage skills, and boost productivity. Sign in to access your personalized dashboard and start collaborating efficiently.
                 </p>
+
+
                 <div className="d-flex align-items-center gap-3">
                   <img
                     src={placeholder}
@@ -111,13 +113,26 @@ const handleLogin = async (e) => {
                       ✅ Task management & progress tracking
                     </li>
                     <li className="mb-2">
+                      ✅ Leave Management & tracking
+                    </li>
+                    <li className="mb-2">
                       ✅ Skill mapping & team insights
+                    </li>
+                    <li className="mb-2">
+                      ✅ Skill assessments & certifications
+                    </li>
+                    <li className="mb-2">
+                      ✅ Monthly Review & feedback system
                     </li>
                     <li className="mb-2">
                       ✅ Real-time collaboration & updates
                     </li>
+
                   </ul>
                 </div>
+
+
+
               </div>
             </div>
             {/* Right: Login Card */}
@@ -163,6 +178,7 @@ const handleLogin = async (e) => {
                       type="submit"
                       className="btn btn-primary w-100 py-2"
                       disabled={submitting}
+                      style={{ backgroundColor: '#3d71acff' }}
                     >
                       {submitting ? 'Logging in…' : 'Login'}
                     </button>
@@ -190,9 +206,9 @@ const handleLogin = async (e) => {
         <div className="container py-3 d-flex flex-column flex-sm-row align-items-center justify-content-between gap-2">
           <span className="text-muted small">© {new Date().getFullYear()} Team Productivity</span>
           <div className="d-flex gap-3 small">
-            <a href="/" className="text-decoration-none">Support</a>
+            <a href="/support" className="text-decoration-none">Support</a>
             <a href="/" className="text-decoration-none">Status</a>
-            <a href="/" className="text-decoration-none">Docs</a>
+            <a href="/docs" className="text-decoration-none">Docs</a>
           </div>
         </div>
       </footer>

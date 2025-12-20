@@ -94,7 +94,7 @@ export default function Exam() {
   const handleOptionSelect = (questionId, optionId) => {
     setAnswers(prev => ({ ...prev, [questionId]: optionId }));
   };
-  const goback = () => navigate('/member-dashboard');
+  const goback = () =>navigate(-1);
   return (
     <div className="container mt-4">
       {/* Header */}

@@ -145,6 +145,9 @@ const MemberDashboard = () => {
       .then(data => setHistory(data))
       .catch(err => console.error("Error fetching leave history:", err));
   }, [user.EmployeeId]);
+
+
+
   const storedUser = JSON.parse(localStorage.getItem("loggedInUser"));
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -155,6 +158,7 @@ const MemberDashboard = () => {
   const handleFileChange = (e) => {
     setSelectedFile(e.target.files[0]);
   }
+
   const UpdateMember = async () => {
     try {
       const formData = new FormData();
@@ -318,6 +322,7 @@ const MemberDashboard = () => {
               </div>
             </div>
           </div>
+
           <button
             type="button"
             className="btn btn-outline-success m-2"
@@ -332,7 +337,7 @@ const MemberDashboard = () => {
             tabIndex="-1"
             aria-labelledby="updateProfileModalLabel"
             aria-hidden="true"
-          >
+           >
             <div className="modal-dialog modal-lg">
               <div className="modal-content">
                 <div className="modal-header">
@@ -448,8 +453,9 @@ const MemberDashboard = () => {
               </div>
             </div>
           </div>
-          <button type="button" class="btn btn-outline-danger" onClick={handleLogout}> Logout</button>
-          <button type="button" class="btn btn-outline-warning ml-2"  ><a className="nav-link" href="/common-review">Common Review</a></button>
+
+          <button type="button" class="btn btn-outline-warning"  ><a className="nav-link" href="/common-review">Common Review</a></button>
+          <button type="button" class="btn btn-outline-danger m-2" onClick={handleLogout}> Logout</button>
         </div>
       </div>
       {/* Info Grid */}
@@ -551,8 +557,8 @@ const MemberDashboard = () => {
         </div> */}
       </div>
       <div className="card shadow-lg border-0">
-        <div className="card-header bg-primary text-white text-center">
-          <h4 className="mb-0">Your Skills</h4>
+        <div className="d-flex  justify-content-between card-header bg-primary text-white text-center">
+          <h4 className="mb-0 text-capitalize">Your Skills</h4>
           <div className="btn-actions-pane-right">
             <div role="group" className="btn-group-sm btn-group mr-2">
               <button
@@ -809,8 +815,19 @@ const MemberDashboard = () => {
           </div>
         </div>
       </div>
-      <div className="card shadow-sm p-4 mt-4">
-        <h5 className="fw-bold text-primary mb-3">Your Tasks</h5>
+      <div className="card shadow-lg border-0 mt-4">
+        <div className="d-flex  justify-content-between card-header bg-primary text-white text-center">
+          <h4 className="mb-0 text-capitalize">Your Task</h4>
+          <div className="btn-actions-pane-right">
+            <div role="group" className="btn-group-sm btn-group mr-2">
+              <button
+                className="btn btn-primary"
+              >
+                <i className="bi bi-plus-circle me-2"></i> Add Task
+              </button>
+            </div>
+          </div>
+        </div>
         <div className="row">
           {tasks.length === 0 ? (
             <p>No tasks assigned yet.</p>
@@ -848,18 +865,24 @@ const MemberDashboard = () => {
           )}
         </div>
       </div>
-      <div className="card shadow-sm p-4 mt-4">
-        <h5 className="fw-bold text-primary mb-3">Leave Management</h5>
-        <div className="btn-actions-pane-right">
-          <div role="group" className="btn-group-sm btn-group mr-2">
-            <button
-              className="btn btn-primary m-2"
-              onClick={handleLeave}
-            >
-              <i className="bi bi-plus-circle me-2"></i> Apply Leave
-            </button>
+      <div className="card shadow-lg border-0 mt-4">
+        <div className="d-flex  justify-content-between card-header bg-primary text-white text-center">
+          <h4 className="mb-0 text-capitalize">Your Leave</h4>
+          <div className="btn-actions-pane-right">
+            <div role="group" className="btn-group-sm btn-group mr-2">
+              <button
+                className="btn btn-primary"
+                onClick={handleLeave}
+              >
+                <i className="bi bi-plus-circle me-2"></i> Apply Leave
+              </button>
+            </div>
           </div>
         </div>
+
+
+
+
         <div className="row">
           <div className="col-md-12 mb-4">
             <table className="table table-striped">

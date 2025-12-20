@@ -111,7 +111,7 @@ export default function QuestionManager() {
   //BAck to dashboard
   const navigate = useNavigate();
   const goback = () => {
-    navigate('/dashboard');
+    navigate(-1);
   };
   return (
     <div className="container mt-4">

@@ -13,6 +13,9 @@ import Exam from './View/Exam';
 import QuestionManager from './View/QuestionManager';
 import LeaveManager from './View/LeaveManager';
 import CommonReview from './View/CommonReview';
+import Support from './pages/Support';
+import Docs from './pages/Document'
+import MemberAction from './View/Manager/MemberAction';
 
 
 function App() {
@@ -30,6 +33,11 @@ function App() {
             <Route path="/QuestionManager" element={<QuestionManager/>}/>
             <Route path="/LeaveManager" element={<LeaveManager/>}/>
              <Route path="/common-review" element={<CommonReview/>}/>
+
+              <Route path="/user-action/:empId" element={<MemberAction/>}/>
+
+               <Route path="/support" element={<Support/>}/>
+               <Route path="/docs" element={<Docs/>}/>
       </Routes>
     </BrowserRouter>
       </header>

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bar } from 'react-chartjs-2';
@@ -89,6 +90,8 @@ const Dashboard = () => {
     };
     fetchChartData();
   }, [user.EmployeeId]);
+
+
   //Task
   // State
   const [members, setMembers] = useState([]);
@@ -214,8 +217,8 @@ const Dashboard = () => {
           <li className="nav-item"><a className="nav-link text-white" href="#user">Users</a></li>
           <li className="nav-item"><a className="nav-link text-white" href="#task">Reports</a></li>
           <li className="nav-item"><a className="nav-link text-white" href="/LeaveManager">Leave Request</a></li>
-<li className="nav-item"><a className="nav-link text-white" href="/common-review">Common Review</a></li>
-          <li className="nav-item"><a className="nav-link text-white" href="/QuestionManager">Skills Question Manager</a></li>
+          <li className="nav-item"><a className="nav-link text-white" href="/common-review">Common Review</a></li>
+          <li className="nav-item"><a className="nav-link text-white" href="/QuestionManager">Question Manager</a></li>
         </ul>
         <button className="btn btn-danger mt-4" onClick={handleLogout}>Logout</button>
       </div>
@@ -258,13 +261,16 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+
+
+
         {/* Chart */}
         <div id="dashboard" className="mt-5">
           <h4>Team Productivity</h4>
           <Bar data={chartData}
           />
         </div>
-        <div id="user" className="container card shadow-sm p-3 mt-4 ">
+        <div id="user" className=" card shadow-sm p-3 mt-4 ">
           <h4 className="mb-4">Employees Under {user?.firstname} {user?.lastname}</h4>
           <div class="card-header d-flex justify-content-between align-items-center">
             <span>Active Users</span>
@@ -337,7 +343,7 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-        <div id="task" className="container card shadow-sm p-3 mt-4">
+        <div id="task" className=" card shadow-sm p-3 mt-4">
           <h4 className="mb-4">Task Assigned by {user?.firstname} {user?.lastname}</h4>
           <div className="card-header d-flex justify-content-between align-items-center">
             <span>Task</span>
