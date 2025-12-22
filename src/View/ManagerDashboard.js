@@ -1,9 +1,10 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bar } from 'react-chartjs-2';
 import { Line } from 'react-chartjs-2';
 import brand from '../logo.svg';
+import { Pie } from 'react-chartjs-2';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -13,58 +14,43 @@ import {
   Title,
   Tooltip,
   Legend,
+  ArcElement,
+  RadialLinearScale,
+  Filler
 } from 'chart.js';
-
-
 function Dashboard() {
-
-
-
   // ----------------- Theme handling -----------------
   const [theme, setTheme] = useState('auto'); // 'light' | 'dark' | 'auto'
   const [searchOpen, setSearchOpen] = useState(false);
-
   const systemPrefersDark =
     typeof window !== 'undefined' &&
     window.matchMedia &&
     window.matchMedia('(prefers-color-scheme: dark)').matches;
-
   const resolvedTheme = theme === 'auto' ? (systemPrefersDark ? 'dark' : 'light') : theme;
-
   useEffect(() => {
     cleanupBootstrapOverlays();
     document.body.setAttribute('data-bs-theme', resolvedTheme);
   }, [resolvedTheme]);
-
   // ----------------- Auth / navigate -----------------
   const navigate = useNavigate();
   // eslint-disable-next-line
   const user = JSON.parse(localStorage.getItem('loggedInUser')) || {};
-
-
-
-// utils/bootstrapCleanup.js
- function cleanupBootstrapOverlays() {
-  // Remove all modal backdrops
-
-  document.querySelectorAll('.modal-backdrop').forEach((bd) => bd.remove());
-  // Remove modal-open class to restore body scroll
-  document.body.classList.remove('modal-open');
-  // Bootstrap may add right padding to avoid layout shift
-  document.body.style.removeProperty('padding-right');
-
-}
-
-
+  // utils/bootstrapCleanup.js
+  function cleanupBootstrapOverlays() {
+    // Remove all modal backdrops
+    document.querySelectorAll('.modal-backdrop').forEach((bd) => bd.remove());
+    // Remove modal-open class to restore body scroll
+    document.body.classList.remove('modal-open');
+    // Bootstrap may add right padding to avoid layout shift
+    document.body.style.removeProperty('padding-right');
+  }
   const handleLogout = () => {
     localStorage.removeItem('loggedInUser');
     navigate('/');
   };
-
   // ----------------- Employees (mapped to manager) -----------------
   const [employees, setEmployees] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-
   useEffect(() => {
     if (user && user.EmployeeId) {
       fetch(`http://localhost:5000/api/mapped-emp/${user.EmployeeId}`)
@@ -76,7 +62,6 @@ function Dashboard() {
         .catch(err => console.error('Error fetching employees:', err));
     }
   }, [user]);
-
   const handleRowClick = (employee) => {
     setSelectedEmployee(employee);
     const modalEl = document.getElementById('employeeModal');
@@ -84,14 +69,11 @@ function Dashboard() {
     const modal = new window.bootstrap.Modal(modalEl);
     modal.show();
   };
-
   // ----------------- Members & Tasks -----------------
   const [members, setMembers] = useState([]);
   const [tasks, setTasks] = useState([]);
-
   useEffect(() => {
     if (!user?.EmployeeId) return;
-
     // Members
     fetch(`http://localhost:5000/api/directmembers/${user.EmployeeId}`)
       .then(response => response.json())
@@ -102,7 +84,6 @@ function Dashboard() {
         console.error('Error fetching members:', error);
         setMembers([]);
       });
-
     // Tasks
     const fetchTasks = async () => {
       try {
@@ -116,16 +97,8 @@ function Dashboard() {
     };
     fetchTasks();
   }, [user?.EmployeeId]);
-
   // ----------------- Productivity chart data (members vs tasks count) -----------------
-
   // ----------------- Chart.js (CDN) charts -----------------
-
-
-
-
-
-
   // ----------------- Task modal (Add/Edit) -----------------
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -138,11 +111,9 @@ function Dashboard() {
     due_date: '',
     priority: 'Medium',
   });
-
   const handleTaskChange = (e) => {
     setTaskData({ ...taskData, [e.target.name]: e.target.value });
   };
-
   const handleAddTaskClick = () => {
     setIsEditing(false);
     setTaskData({
@@ -156,7 +127,6 @@ function Dashboard() {
     });
     setShowTaskModal(true);
   };
-
   const handleEditTaskClick = (task) => {
     setIsEditing(true);
     setTaskData({
@@ -170,7 +140,6 @@ function Dashboard() {
     });
     setShowTaskModal(true);
   };
-
   const handleSubmitTask = async (e) => {
     e.preventDefault();
     const url = isEditing
@@ -178,7 +147,6 @@ function Dashboard() {
       : 'http://localhost:5000/api/add-task';
     const method = isEditing ? 'PATCH' : 'POST';
     const payload = { ...taskData, assigned_by: user.EmployeeId };
-
     try {
       const response = await fetch(url, {
         method,
@@ -188,7 +156,6 @@ function Dashboard() {
       const result = await response.json();
       alert(result.message || 'Operation completed');
       setShowTaskModal(false);
-
       // Refresh tasks
       try {
         const res = await fetch(`http://localhost:5000/api/tasks/${user.EmployeeId}`);
@@ -202,7 +169,6 @@ function Dashboard() {
       alert('Failed to save task. Please try again.');
     }
   };
-
   const handleDeleteTask = async (taskId) => {
     if (window.confirm('Are you sure you want to delete this task?')) {
       try {
@@ -211,7 +177,6 @@ function Dashboard() {
         });
         const result = await response.json();
         alert(result.message || 'Task deleted');
-
         // Refresh tasks
         try {
           const res = await fetch(`http://localhost:5000/api/tasks/${user.EmployeeId}`);
@@ -226,9 +191,6 @@ function Dashboard() {
       }
     }
   };
-
-
-
   //-----------------------
   const [chartData, setChartData] = useState({
     labels: [],
@@ -251,8 +213,8 @@ function Dashboard() {
         const colors = counts.map(count => {
           if (count <= 2) return "rgba(75, 192, 75, 0.7)"; // Green
           if (count <= 5) return "rgba(255, 159, 64, 0.7)"; // Orange
-          if (count <= 9) return "rgba(54, 162, 235, 0.7)"; // Blue
-          return "rgba(255, 99, 132, 0.7)"; // Red
+          if (count <= 9) return "rgba(226, 98, 83, 0.7)"; // Blue
+          return "rgba(241, 9, 59, 0.7)"; // Red
         });
         // Update chart data
         setChartData({
@@ -271,15 +233,11 @@ function Dashboard() {
     };
     fetchChartData();
   }, [user.EmployeeId]);
-
-
   // Derived KPI: Completion %
   const completionPct =
     tasks.length > 0
       ? Math.round((tasks.filter(t => (t.status ?? 'Pending') === 'Completed').length / tasks.length) * 100)
       : 0;
-
-
   // const Data = {
   //     labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
   //     datasets: [
@@ -290,47 +248,118 @@ function Dashboard() {
   //       },
   //     ],
   //   };
-
-
-
-
   // Register components for Line chart
-  ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
-
-  const Data = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+  ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, ArcElement, ChartDataLabels,RadialLinearScale, Filler, Title, Tooltip, Legend);
+  // const Data = {
+  //   labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+  //   datasets: [
+  //     {
+  //       label: 'Productivity',
+  //       data: [10, 59, 30, 81, 56],
+  //       borderColor: 'rgba(54, 162, 235, 1)', // Line color
+  //       backgroundColor: 'rgba(54, 162, 235, 0.2)', // Fill under line
+  //       fill: true, // Fill area under line
+  //       tension: 0, // Smooth curve
+  //       pointBackgroundColor: 'rgba(54, 162, 235, 1)', // Point color
+  //     },
+  //   ],
+  // };
+  // const options = {
+  //   responsive: true,
+  //   plugins: {
+  //     legend: { position: 'top' },
+  //     title: { display: true, text: 'Team Productivity Over Months' },
+  //   },
+  //   scales: {
+  //     y: { beginAtZero: true },
+  //   },
+  // };
+  // Prepare monthly completed tasks data
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const completedByMonth = Array(12).fill(0);
+  tasks.forEach(task => {
+    if ((task.status ?? '').toLowerCase() === 'completed' && task.updated_at) {
+      const date = new Date(task.updated_at);
+      if (!isNaN(date.getTime())) {
+        const monthIndex = date.getMonth(); // 0 = Jan
+        completedByMonth[monthIndex]++;
+      }
+    }
+  });
+  const lineData = {
+    labels: months,
     datasets: [
       {
-        label: 'Productivity',
-        data: [10, 59, 30, 81, 56],
-        borderColor: 'rgba(54, 162, 235, 1)', // Line color
-        backgroundColor: 'rgba(54, 162, 235, 0.2)', // Fill under line
-        fill: true, // Fill area under line
-        tension: 0, // Smooth curve
-        pointBackgroundColor: 'rgba(54, 162, 235, 1)', // Point color
+        label: '',
+        data: completedByMonth,
+        borderColor: 'rgba(54, 162, 235, 1)',
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        fill: true,
+        tension: 0.1,
+        pointBackgroundColor: 'rgba(54, 162, 235, 1)',
       },
     ],
   };
-
-  const options = {
+  const lineOptions = {
     responsive: true,
     plugins: {
       legend: { position: 'top' },
-      title: { display: true, text: 'Team Productivity Over Months' },
+      title: { display: true, text: 'Task Completed Per Month' },
+      datalabels: {
+        display: true,
+        font: { weight: 'bold' },
+        formatter: (value) => value, // Show the count
+        align: 'top',
+      },
     },
     scales: {
-      y: { beginAtZero: true },
+      y: {
+        beginAtZero: true,
+        ticks: {
+          stepSize: 0.5, // ✅ Force steps of 1
+          // callback: function (value) {
+          //   return Number.isInteger(value) ? value : ''; // ✅ Hide decimals
+          // },
+        },
+      },
     },
   };
-
-
-
-
-
+  //Pie chart
+  const statusCounts = {
+    Completed: tasks.filter(t => (t.status ?? 'Not Started') === 'Completed').length,
+    InProgress: tasks.filter(t => (t.status ?? 'Not Started') === 'In Progress').length,
+    NotStarted: tasks.filter(t => (t.status ?? 'Not Started') === 'Not Started').length,
+  };
+  const pieData = {
+    labels: ['Completed', 'In Progress', 'Not Started'],
+    datasets: [
+      {
+        data: [statusCounts.Completed, statusCounts.InProgress, statusCounts.NotStarted],
+        backgroundColor: ['#4CAF50', '#2196F3', '#FFC107'], // Green, Blue, Yellow
+        hoverBackgroundColor: ['#45a049', '#1976D2', '#FFB300'],
+      },
+    ],
+  };
+  const pieOptions = {
+    responsive: true,
+    plugins: {
+      legend: { position: 'bottom' },
+      title: {
+        display: true,
+        text: 'Task Status Distribution'
+      },
+      datalabels: {
+        color: '#fff',
+        font: { weight: 'bold' },
+        formatter: (value, context) => {
+          // const label = context.chart.data.labels[context.dataIndex];
+          // return `${label}: ${value}`;
+          return ` ${value}`;
+        },
+      },
+    },
+  };
   //User update function
-
-
-
   const storedUser = JSON.parse(localStorage.getItem("loggedInUser"));
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -379,30 +408,126 @@ function Dashboard() {
       alert("Failed to update. Please try again");
     }
   }
-
-//-------------------------------------------
-//Actions on Member
-const handleMember = async (empid)=>{
-
- navigate(`/user-action/${empid}`);
-
-}
-//Remove Member
-// const handleRemoveMember  = async (empid) => {
-//     alert(empid);
-//   };
-
-
-
-
+  //-------------------------------------------
+  //Actions on Member
+  const handleMember = async (empid) => {
+    navigate(`/user-action/${empid}`);
+  }
+  //Remove Member
+  // const handleRemoveMember  = async (empid) => {
+  //     alert(empid);
+  //   };
+//---------------------------------------
+const [leave_request, setLeaveRequest] = useState({});
+ useEffect(() => {
+        fetch(`http://localhost:5000/api/leave/manager-summary/${user.EmployeeId}`)
+            .then(res => res.json())
+            .then(data => setLeaveRequest(data));
+});
+  //----------------------------------------
+  //Show Members hierarchy
+  const [manager, setManager] = useState([]);
+  useEffect(() => {
+    fetch(`http://localhost:5000/api/manager/${user.EmployeeId}`)
+      .then((res) => res.json())
+      .then((data) => setManager(data));
+  });
+  const [members1, setMembers1] = useState([]);
+  const ShowMembers = async () => {
+    if (!user?.EmployeeId) return;
+    try {
+      const res = await fetch(`http://localhost:5000/api/directmembers/${user.mapped_to}`);
+      const data = await res.json();
+      const list = Array.isArray(data) ? data : (data?.data || []);
+      setMembers1(list);
+      // Show Bootstrap modal
+      const modal = new window.bootstrap.Modal(document.getElementById('membersModal'));
+      modal.show();
+    } catch (err) {
+      console.error('Error fetching members:', err);
+      setMembers([]);
+    }
+  };
+// ===================== Skills comparison state =====================
+const [skillMatrix, setSkillMatrix] = useState({}); // { employeeId: { skillName: { prof, years, cert } } }
+// ---- Composite scoring utility (simple, logical, explainable) ----
+// Centralized weights (must sum to 1)
+// ---- Option A: Tiered points (very explainable) ----
+const profPoints = (p) => {
+  const val = Math.max(0, Math.min(Number(p || 0), 100));
+  if (val < 25) return 2;
+  if (val < 50) return 4;
+  if (val < 75) return 7;
+  return 10;
+};
+const expPoints = (years) => {
+  const y = Math.min(Number(years || 0), 10);
+  if (y <= 1) return 2;
+  if (y <= 4) return 4;
+  if (y <= 7) return 7;
+  return 10;
+};
+const certPoints = (cert) => {
+  const hasCert = typeof cert === 'boolean'
+    ? cert
+    : Boolean(cert && String(cert).trim() !== '');
+  return hasCert ? 2 : 0;
+};
+const skillScore = (p, y, cert) => {
+  return profPoints(p) + expPoints(y) + certPoints(cert); // 0..22
+};
+const leaderboard = React.useMemo(() => {
+  return employees.map(e => {
+    const skills = skillMatrix[e.EmployeeId] || {};
+    const entries = Object.values(skills); // [{prof,years,cert}, ...]
+    if (entries.length === 0) return { employee: e, score: 0 };
+    const total = entries.reduce((sum, s) => sum + skillScore(s.prof, s.years, s.cert), 0);
+    const avg = Math.round(total / entries.length); // avg points
+    return { employee: e, score: avg };
+  }).sort((a, b) => b.score - a.score);
+  // eslint-disable-next-line
+}, [employees, skillMatrix]);
+//---------------------------------------------
+const API = 'http://localhost:5000';
+useEffect(() => {
+  const loadSkills = async () => {
+    if (!employees || employees.length === 0) {
+      setSkillMatrix({});
+      return;
+    }
+    const entries = await Promise.all(
+      employees.map(async (e) => {
+        try {
+          const res = await fetch(`${API}/api/user-skills/${e.EmployeeId}`);
+          const data = await res.json();
+          const map = {};
+          (Array.isArray(data) ? data : []).forEach(s => {
+            map[s.skill_name] = {
+              prof: Number(s.proficiency_percent || 0),
+              years: Number(s.years_of_experience || 0),
+              cert: s.certificate || ''
+            };
+          });
+          return [e.EmployeeId, map];
+        } catch (err) {
+          console.error('load skills error for', e.EmployeeId, err);
+          return [e.EmployeeId, {}];
+        }
+      })
+    );
+    const matrix = Object.fromEntries(entries);
+    setSkillMatrix(matrix);
+  };
+  loadSkills();
+}, [employees]);
+  const openModal = (employee) => setSelectedEmployee(employee);
+  const closeModal = () => setSelectedEmployee(null);
   // ----------------- Render -----------------
   return (
     <>
       {/* Sticky top Navbar (dark) */}
       <header className="navbar sticky-top bg-dark flex-md-nowrap p-0 shadow" data-bs-theme="dark">
-
         <a className="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6 text-white" href="/">
-
           <img
             src={brand}
             alt="Brand"
@@ -412,7 +537,6 @@ const handleMember = async (empid)=>{
           />
           <span className="fw-semibold">Team Productivity</span>
         </a>
-
         <ul className="navbar-nav flex-row d-md-none ms-auto">
           {/* Toggle search */}
           <li className="nav-item text-nowrap">
@@ -425,7 +549,6 @@ const handleMember = async (empid)=>{
               <i className="bi bi-search" aria-hidden="true"></i>
             </button>
           </li>
-
           {/* Toggle sidebar (Offcanvas) */}
           <li className="nav-item text-nowrap">
             <button
@@ -440,7 +563,6 @@ const handleMember = async (empid)=>{
             </button>
           </li>
         </ul>
-
         {/* Collapsible search (mobile) */}
         <div className={`navbar-search w-100 collapse ${searchOpen ? 'show' : ''}`}>
           <input
@@ -451,25 +573,18 @@ const handleMember = async (empid)=>{
           />
         </div>
       </header>
-
       <div className="container-fluid">
         <div className="row">
           {/* Sidebar (md+) */}
           <div className="sidebar border border-end col-md-3 col-lg-2 p-0 bg-body-tertiary d-none d-md-block"
-
             style={{ position: 'sticky', top: '6vh', height: '94vh', borderRight: '1px solid var(--bs-border-color)' }}
-
           >
-
-
-
-
             <div className="d-md-flex flex-column p-0 pt-lg-3 overflow-y-auto" style={{ minHeight: '94vh' }}>
               <ul className="nav flex-column">
                 <li className="nav-item">
-                  <a className="nav-link d-flex align-items-center gap-2 active" aria-current="page" href="#dashboard">
-                    <i className="bi bi-house-fill" aria-hidden="true"></i>
-                    Dashboard
+                  <a className="nav-link d-flex align-items-center gap-2 active" style={{ textTransform: 'capitalize' }} aria-current="page" href="/manager-dashboard">
+                    <i className="bi bi-house-fill" aria-hidden="true" ></i>
+                    {user.role}  Dashboard
                   </a>
                 </li>
                 <li className="nav-item">
@@ -503,15 +618,12 @@ const handleMember = async (empid)=>{
                   </a>
                 </li>
               </ul>
-
-
               <h6 className="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-body-secondary text-uppercase">
                 <span>Saved reports</span>
                 <a className="link-secondary" href="#1" aria-label="Add a new report">
                   <i className="bi bi-plus-circle" aria-hidden="true"></i>
                 </a>
               </h6>
-
               <ul className="nav flex-column mb-auto">
                 <li className="nav-item">
                   <a className="nav-link d-flex align-items-center gap-2" href="#1">
@@ -538,9 +650,7 @@ const handleMember = async (empid)=>{
                   </a>
                 </li>
               </ul>
-
               <hr className="my-3" />
-
               <ul className="nav flex-column mb-auto">
                 <li className="nav-item">
                   <a className="nav-link d-flex align-items-center gap-2" href="#1">
@@ -548,9 +658,6 @@ const handleMember = async (empid)=>{
                     Settings
                   </a>
                 </li>
-
-
-
                 <li className="nav-item">
                   <button className="nav-link d-flex align-items-center gap-2 btn btn-link text-start" onClick={handleLogout}>
                     <i className="bi bi-door-closed" aria-hidden="true"></i>
@@ -559,11 +666,7 @@ const handleMember = async (empid)=>{
                 </li>
               </ul>
             </div>
-
-
-
           </div>
-
           {/* Mobile Offcanvas Sidebar */}
           <div
             className="offcanvas offcanvas-end bg-body-tertiary d-md-none"
@@ -573,8 +676,6 @@ const handleMember = async (empid)=>{
           >
             <div className="offcanvas-header">
               <h5 className="offcanvas-title" id="sidebarMenuLabel">
-
-
                 <img
                   src={brand}
                   alt="Brand"
@@ -583,9 +684,6 @@ const handleMember = async (empid)=>{
                   className="rounded-circle"
                 />
                 <span className="fw-semibold">Team Productivity</span>
-
-
-
               </h5>
               <button
                 type="button"
@@ -634,15 +732,12 @@ const handleMember = async (empid)=>{
                   </a>
                 </li>
               </ul>
-
-
               <h6 className="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-body-secondary text-uppercase">
                 <span>Saved reports</span>
                 <a className="link-secondary" href="#1" aria-label="Add a new report">
                   <i className="bi bi-plus-circle" aria-hidden="true"></i>
                 </a>
               </h6>
-
               <ul className="nav flex-column mb-auto">
                 <li className="nav-item">
                   <a className="nav-link d-flex align-items-center gap-2" href="#1">
@@ -669,9 +764,7 @@ const handleMember = async (empid)=>{
                   </a>
                 </li>
               </ul>
-
               <hr className="my-3" />
-
               <ul className="nav flex-column mb-auto">
                 <li className="nav-item">
                   <a className="nav-link d-flex align-items-center gap-2" href="#1">
@@ -679,9 +772,6 @@ const handleMember = async (empid)=>{
                     Settings
                   </a>
                 </li>
-
-
-
                 <li className="nav-item">
                   <button className="nav-link d-flex align-items-center gap-2 btn btn-link text-start" onClick={handleLogout}>
                     <i className="bi bi-door-closed" aria-hidden="true"></i>
@@ -691,7 +781,6 @@ const handleMember = async (empid)=>{
               </ul>
             </div>
           </div>
-
           {/* Main content */}
           <main className="col-md-9 ms-sm-auto col-lg-10 px-md-4">
             {/* Header & filter */}
@@ -703,230 +792,180 @@ const handleMember = async (empid)=>{
                   className="rounded-circle"
                   width="50"
                 />
-
-
-
-
                 Hi, {user?.firstname || 'Admin'}!
-
               </h4>
-
-
-
-
-
-
-
               <div className="btn-toolbar mb-2 mb-md-0">
                 <div className="btn-group me-2">
                   <button type="button" className="btn btn-sm btn-outline-secondary">Share</button>
                   <button type="button" className="btn btn-sm btn-outline-secondary">Export</button>
                 </div>
-
-
-
-
-
-<div class="dropdown">
-  <button
-    type="button"
-    class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-1"
-    id="filterToggle"
-    data-bs-toggle="dropdown"
-    data-bs-auto-close="true"
-    data-bs-boundary="viewport"
-    data-bs-container="body"
-    aria-expanded="false"
-    aria-controls="filterMenu"
-  >
-    <i class="bi bi-calendar3" aria-hidden="true"></i>
-    This week
-  </button>
-
-  <ul
-    id="filterMenu"
-    class="dropdown-menu"
-    aria-labelledby="filterToggle"
-  >
-    <li><button class="dropdown-item">Today</button></li>
-    <li><button class="dropdown-item">This week</button></li>
-    <li><button class="dropdown-item">This month</button></li>
-    <li>
-      <button
-        type="button"
-        class="btn btn-outline-success m-2"
-        data-bs-toggle="modal"
-        data-bs-target="#updateProfileModal"
-      >
-        Update Profile
-      </button>
-    </li>
-  </ul>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-              </div>
-            </div>
-
-
-
-      {/* update profile of manager */}
-      <div
-        className="modal fade"
-        id="updateProfileModal"
-        tabIndex="-1"
-        aria-labelledby="updateProfileModalLabel"
-        aria-hidden="true"
-      >
-        <div className="modal-dialog modal-lg">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title" id="updateProfileModalLabel">
-                Update Profile
-              </h5>
-              <button
-                type="button"
-                className="btn-close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              ></button>
-            </div>
-            <div className="modal-body">
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  await UpdateMember();
-                  // ✅ Close modal
-                  const modalElement = document.getElementById('updateProfileModal');
-                  const modalInstance = window.bootstrap.Modal.getInstance(modalElement);
-                  modalInstance.hide();
-                  // ✅ Remove    // ✅ Remove leftover backdrop
-                  document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
-                }}
-              >
-                <div className="row">
-                  <div className="col-md-6 mb-3">
-                    <label className="form-label"> First Name</label>
-                    <input
-                      name="firstname"
-                      className="form-control"
-                      value={userData.firstname || ""}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                  <div className="col-md-6 mb-3">
-                    <label className="form-label">Last Name</label>
-                    <input
-                      type="text"
-                      name="lastname"
-                      className="form-control"
-                      value={userData.lastname || ""}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">Email</label>
-                  <input
-                    type="email"
-                    name="email"
-                    className="form-control"
-                    value={userData.email || ""}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="row">
-                  <div className="col-md-6 mb-3">
-                    <label className="form-label">Designation</label>
-                    <input
-                      type="text"
-                      name="post"
-                      className="form-control"
-                      value={userData.post || ""}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                  <div className="col-md-6 mb-3">
-                    <label className="form-label">Location</label>
-                    <input
-                      type="text"
-                      name="location"
-                      className="form-control"
-                      value={userData.location || ""}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">Date of Joining</label>
-                  <input
-                    type="date"
-                    name="doj"
-                    className="form-control"
-                    value={userData.doj || ""}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">Profile Picture</label>
-                  <input
-                    type="file"
-                    className="form-control"
-                    onChange={handleFileChange}
-                  />
-                </div>
-                {/* ✅ Buttons Row */}
-                <div className="row-10 d-flex justify-content-between">
-                  <button type="submit" className="col-md-5 btn btn-primary">
-                    Save Changes
-                  </button>
+                <div class="dropdown">
                   <button
                     type="button"
-                    className="col-md-5 btn btn-secondary"
-                    data-bs-dismiss="modal"
+                    class="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-1"
+                    id="filterToggle"
+                    data-bs-toggle="dropdown"
+                    data-bs-auto-close="true"
+                    data-bs-boundary="viewport"
+                    data-bs-container="body"
+                    aria-expanded="false"
+                    aria-controls="filterMenu"
                   >
-                    Cancel
+                    <i class="bi bi-calendar3" aria-hidden="true"></i>
+                    Dropdown
                   </button>
+                  <ul
+                    id="filterMenu"
+                    class="dropdown-menu p-2"
+                    aria-labelledby="filterToggle"
+                  >
+                    <li>
+                      <button
+                        type="button"
+                        class="btn btn-outline-success m-2 dropdown-item"
+                        data-bs-toggle="modal"
+                        data-bs-target="#updateProfileModal"
+                      > <i className="bi bi-pencil-square me-1"></i>
+                        Update Profile
+                      </button>
+                    </li>
+                    {/* <li><button class="btn btn-outline-success m-2">Today</button></li>
+                    <li><button class="btn btn-outline-success m-2">This week</button></li> */}
+                    <li>
+                      <button type="button" className="btn btn-outline-info m-2 dropdown-item" onClick={ShowMembers}>
+                        <i className="bi bi-people-fill me-1"></i>Team Member
+                      </button>
+                    </li>
+                  </ul>
                 </div>
-              </form>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-
-
-
-
-            {/* Sales Line (demo) */}
-            {/* <div id="dashboard" className="mt-5">
-                        <h4>Team Productivity</h4>
-                        <Bar data={Data}
+            {/* update profile of manager */}
+            <div
+              className="modal fade"
+              id="updateProfileModal"
+              tabIndex="-1"
+              aria-labelledby="updateProfileModalLabel"
+              aria-hidden="true"
+            >
+              <div className="modal-dialog modal-lg">
+                <div className="modal-content">
+                  <div className="modal-header">
+                    <h5 className="modal-title" id="updateProfileModalLabel">
+                      Update Profile
+                    </h5>
+                    <button
+                      type="button"
+                      className="btn-close"
+                      data-bs-dismiss="modal"
+                      aria-label="Close"
+                    ></button>
+                  </div>
+                  <div className="modal-body">
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        await UpdateMember();
+                        // ✅ Close modal
+                        const modalElement = document.getElementById('updateProfileModal');
+                        const modalInstance = window.bootstrap.Modal.getInstance(modalElement);
+                        modalInstance.hide();
+                        // ✅ Remove    // ✅ Remove leftover backdrop
+                        document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+                      }}
+                    >
+                      <div className="row">
+                        <div className="col-md-6 mb-3">
+                          <label className="form-label"> First Name</label>
+                          <input
+                            name="firstname"
+                            className="form-control"
+                            value={userData.firstname || ""}
+                            onChange={handleInputChange}
+                          />
+                        </div>
+                        <div className="col-md-6 mb-3">
+                          <label className="form-label">Last Name</label>
+                          <input
+                            type="text"
+                            name="lastname"
+                            className="form-control"
+                            value={userData.lastname || ""}
+                            onChange={handleInputChange}
+                          />
+                        </div>
+                      </div>
+                      <div className="mb-3">
+                        <label className="form-label">Email</label>
+                        <input
+                          type="email"
+                          name="email"
+                          className="form-control"
+                          value={userData.email || ""}
+                          onChange={handleInputChange}
                         />
-                </div> */}
-
-
-            <div id="dashboard" className="mt-5">
-              <h4>Team Productivity</h4>
-              <Line data={Data} options={options} />
+                      </div>
+                      <div className="row">
+                        <div className="col-md-6 mb-3">
+                          <label className="form-label">Designation</label>
+                          <input
+                            type="text"
+                            name="post"
+                            className="form-control"
+                            value={userData.post || ""}
+                            onChange={handleInputChange}
+                          />
+                        </div>
+                        <div className="col-md-6 mb-3">
+                          <label className="form-label">Location</label>
+                          <input
+                            type="text"
+                            name="location"
+                            className="form-control"
+                            value={userData.location || ""}
+                            onChange={handleInputChange}
+                          />
+                        </div>
+                      </div>
+                      <div className="mb-3">
+                        <label className="form-label">Date of Joining</label>
+                        <input
+                          type="date"
+                          name="doj"
+                          className="form-control"
+                          value={userData.doj || ""}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      <div className="mb-3">
+                        <label className="form-label">Profile Picture</label>
+                        <input
+                          type="file"
+                          className="form-control"
+                          onChange={handleFileChange}
+                        />
+                      </div>
+                      {/* ✅ Buttons Row */}
+                      <div className="row-10 d-flex justify-content-between">
+                        <button type="submit" className="col-md-5 btn btn-primary">
+                          Save Changes
+                        </button>
+                        <button
+                          type="button"
+                          className="col-md-5 btn btn-secondary"
+                          data-bs-dismiss="modal"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
             </div>
-
-
-
             {/* KPIs */}
-            <div className="row mt-4">
-              <div className="col-md-4">
+            {/* <div className="row mt-4">
+              <div className="col-md-3">
                 <div className="card text-center">
                   <div className="card-body">
                     <h5 className="card-title">Total Employees</h5>
@@ -934,7 +973,15 @@ const handleMember = async (empid)=>{
                   </div>
                 </div>
               </div>
-              <div className="col-md-4">
+              <div className="col-md-3">
+                <div className="card text-center">
+                  <div className="card-body">
+                    <h5 className="card-title">Total Employees</h5>
+                    <p className="card-text">{employees.length}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="col-md-3">
                 <div className="card text-center">
                   <div className="card-body">
                     <h5 className="card-title">Active Members</h5>
@@ -942,7 +989,7 @@ const handleMember = async (empid)=>{
                   </div>
                 </div>
               </div>
-              <div className="col-md-4">
+              <div className="col-md-3">
                 <div className="card text-center">
                   <div className="card-body">
                     <h5 className="card-title">Project Completion</h5>
@@ -950,20 +997,190 @@ const handleMember = async (empid)=>{
                   </div>
                 </div>
               </div>
+            </div> */}
+            <div className="row g-2 mt-3">
+              {/* Total Employees */}
+              <div className="col-6 col-lg-3">
+                <div className="card border-0 shadow-sm h-100">
+                  <div className="card-body text-center py-2">
+                    <div
+                      className="d-inline-flex align-items-center justify-content-center rounded-pill bg-primary bg-opacity-10 text-primary mb-1"
+                      style={{ width: 36, height: 36 }}
+                    >
+                      <i className="bi bi-people-fill fs-6"></i>
+                    </div>
+                    <div className="text-uppercase text-muted small">Total Employees</div>
+                    <div className="fw-bold fs-5">{employees.length}</div>
+                  </div>
+                </div>
+              </div>
+              {/* Active Members */}
+              <div className="col-6 col-lg-3">
+                <div className="card border-0 shadow-sm h-100">
+                  <div className="card-body text-center py-2">
+                    <div
+                      className="d-inline-flex align-items-center justify-content-center rounded-pill bg-success bg-opacity-10 text-success mb-1"
+                      style={{ width: 36, height: 36 }}
+                    >
+                      <i className="bi bi-calendar-event-fill fs-6"></i>
+                    </div>
+                    <div className="text-uppercase text-muted small">Leave Request</div>
+                    <div className="fw-bold fs-5">{leave_request.pending_requests || 0}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {/* You had a duplicate “Total Employees”—keeping a compact tile here */}
+              <div className="col-6 col-lg-3">
+                <div className="card border-0 shadow-sm h-100">
+                  <div className="card-body text-center py-2">
+                    <div
+                      className="d-inline-flex align-items-center justify-content-center rounded-pill bg-info bg-opacity-10 text-info mb-1"
+                      style={{ width: 36, height: 36 }}
+                    >
+                      <i className="bi bi-clipboard-check fs-6"></i>
+                    </div>
+                    <div className="text-uppercase text-muted small">Total Task</div>
+                    <div className="fw-bold fs-5">{tasks.length}</div>
+                  </div>
+                </div>
+              </div>
+              {/* Project Completion */}
+              <div className="col-6 col-lg-3">
+                <div className="card border-0 shadow-sm h-100">
+                  <div className="card-body text-center py-2">
+                    <div
+                      className="d-inline-flex align-items-center justify-content-center rounded-pill bg-warning bg-opacity-10 text-warning mb-1"
+                      style={{ width: 36, height: 36 }}
+                    >
+                      <i className="bi bi-graph-up-arrow fs-6"></i>
+                    </div>
+                    <div className="text-uppercase text-muted small">Project Completion</div>
+                    <div className="fw-bold fs-5">{completionPct}%</div>
+                    <div className="progress mt-1" style={{ height: 4 }}>
+                      <div
+                        className="progress-bar bg-warning"
+                        role="progressbar"
+                        style={{ width: `${completionPct}%` }}
+                        aria-valuenow={completionPct}
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-
+            {/* {Modal for Members } */}
+            <div className="modal fade" id="membersModal" tabIndex="-1" aria-hidden="true">
+              <div className="modal-dialog modal-dialog-centered modal-lg">
+                <div className="modal-content">
+                  <div className="modal-header">
+                    <h5 className="modal-title">Team Members of {user?.firstname} {user?.lastname}</h5>
+                    <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" />
+                  </div>
+                  <div className="modal-body">
+                    {members1.length === 0 ? (
+                      <p className="text-muted">No members found.</p>
+                    ) : (
+                      <div className="text-center">
+                        {/* Manager node */}
+                        <div className="d-inline-flex align-items-center gap-2 p-2 border rounded bg-light">
+                          <img
+                            src={
+                              manager[0]?.profile_picture
+                                ? `http://localhost:5000/uploads/${encodeURIComponent(manager[0]?.profile_picture)}`
+                                : 'https://avatar.iran.liara.run/public'
+                            }
+                            alt="Director"
+                            className="rounded-circle"
+                            width="40"
+                            height="40"
+                            style={{ objectFit: 'cover' }}
+                          />
+                          <div className="text-start">
+                            <div className="fw-semibold">{manager[0]?.firstname} {manager[0]?.lastname}</div>
+                            <div className="text-muted small">{manager[0]?.role} · {manager[0]?.post}</div>
+                          </div>
+                        </div>
+                        {/* Connector */}
+                        <div className="mx-auto my-2" style={{ width: 2, height: 16, background: '#dee2e6' }} />
+                        <div className="d-inline-flex align-items-center gap-2 p-2 border rounded bg-light">
+                          <img
+                            src={
+                              user.profile_picture_url || 'https://avatar.iran.liara.run/public'
+                            }
+                            alt="Manager"
+                            className="rounded-circle"
+                            width="40"
+                            height="40"
+                            style={{ objectFit: 'cover' }}
+                          />
+                          <div className="text-start">
+                            <div className="fw-semibold">{user?.firstname} {user?.lastname}</div>
+                            <div className="text-muted small">{user?.role} · {user?.post}</div>
+                          </div>
+                        </div>
+                        <div className="mx-auto my-2" style={{ width: 2, height: 16, background: '#dee2e6' }} />
+                        {/* Members grid */}
+                        <div className="row g-3 justify-content-center">
+                          {employees.map(m => (
+                            <div key={m.EmployeeId} className="col-12 col-sm-6 col-md-4">
+                              <div className="d-inline-flex align-items-center gap-2 p-2 border rounded bg-light">
+                                <img
+                                  src={
+                                    m.profile_picture_url || 'https://avatar.iran.liara.run/public'
+                                  }
+                                  alt="Manager"
+                                  className="rounded-circle"
+                                  width="40"
+                                  height="40"
+                                  style={{ objectFit: 'cover' }}
+                                />
+                                <div className="text-start">
+                                  <div className="fw-semibold">{m.firstname} {m.lastname}</div>
+                                  <div className="text-muted small">{m.role} · {m.post}</div>
+                                </div>
+                              </div>
+                              {/* Optional meta
+                          {m.location && <div className="text-muted small">📍 {m.location}</div>}
+                          {m.doj && <div className="text-muted small">🗓 Joined: {new Date(m.doj).toLocaleDateString()}</div>}
+                          */}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="row d-flex justify-content-between mt-4">
+              {/* <div id="dashboard" className="mt-5 col-md-7">
+                <h4>Team Productivity</h4>
+                <Line data={Data} options={options} />
+              </div> */}
+              <h5>Task Completion </h5>
+              <div className="col-md-7">
+                <Line data={lineData} options={lineOptions} />
+              </div>
+              <div className="col-md-4">
+                {/* <h4>Task Status Overview</h4> */}
+                <Pie data={pieData} options={pieOptions} />
+              </div>
+            </div>
+            {/* Sales Line (demo) */}
+            {/* <div id="dashboard" className="mt-5">
+                        <h4>Team Productivity</h4>
+                        <Bar data={Data}
+                        />
+                </div> */}
             {/* Team Productivity (Bar) */}
-
-
-            <div id="dashboard" className="mt-5">
-              <h4>Team Productivity</h4>
-              <Bar data={chartData}
-              />
-
-              {/* <canvas ref={productivityBarRef} aria-label="Team productivity bar chart"></canvas> */}
-
+            <div id="dashboard" className="mt-5 ">
+              <h5>Task Distribution</h5>
+              <Bar data={chartData} />
             </div>
-
+            {/* <canvas ref={productivityBarRef} aria-label="Team productivity bar chart"></canvas> */}
             {/* Employees table */}
             <div id="user" className="card shadow-sm p-3 mt-4">
               <div className="d-flex align-items-center mb-3">
@@ -973,9 +1190,8 @@ const handleMember = async (empid)=>{
                   className="rounded-circle me-3"
                   width="50"
                 />
-                <h4 className="mb-0">Employees Under {user?.firstname} {user?.lastname}</h4>
+                <h5 className="mb-0">Employees Reporting to {user?.firstname} {user?.lastname}</h5>
               </div>
-
               <div className="card-header d-flex justify-content-between align-items-center">
                 <span>Active Users</span>
                 <div className="btn-actions-pane-right">
@@ -986,7 +1202,6 @@ const handleMember = async (empid)=>{
                   </div>
                 </div>
               </div>
-
               <div className="table-responsive mt-3">
                 <table className="table table-hover table-bordered">
                   <thead className="table-dark text-center">
@@ -1020,7 +1235,6 @@ const handleMember = async (empid)=>{
                   </tbody>
                 </table>
               </div>
-
               {/* Employee Modal (Bootstrap) */}
               <div className="modal fade" id="employeeModal" tabIndex="-1" aria-hidden="true">
                 <div className="modal-dialog modal-dialog-centered">
@@ -1049,25 +1263,17 @@ const handleMember = async (empid)=>{
                       )}
                     </div>
                     <div className="modal-footer d-flex justify-content-between">
-
-
-                        <button type="button" className="col-md-5 btn btn-danger" data-bs-dismiss="modal" onClick={() => handleMember(selectedEmployee.EmployeeId)}>Actions</button>
-
-                           {/* <button type="button" className="col-md-5 btn btn-danger"  onClick={() => handleRemoveMember(selectedEmployee.EmployeeId)}>Remove Member</button> */}
-
+                      <button type="button" className="col-md-5 btn btn-danger" data-bs-dismiss="modal" onClick={() => handleMember(selectedEmployee.EmployeeId)}>Actions</button>
+                      {/* <button type="button" className="col-md-5 btn btn-danger"  onClick={() => handleRemoveMember(selectedEmployee.EmployeeId)}>Remove Member</button> */}
                       <button type="button" className="col-md-5 btn btn-secondary" data-bs-dismiss="modal">Close</button>
-
-
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-
             {/* Tasks */}
             <div id="task" className="card shadow-sm p-3 mt-4">
-              <h4 className="mb-4">Task Assigned by {user?.firstname} {user?.lastname}</h4>
-
+              <h5 className="mb-4">Task Assigned by {user?.firstname} {user?.lastname}</h5>
               <div className="card-header d-flex justify-content-between align-items-center">
                 <span>Task</span>
                 <div className="btn-actions-pane-right">
@@ -1078,7 +1284,6 @@ const handleMember = async (empid)=>{
                   </div>
                 </div>
               </div>
-
               {tasks.length === 0 ? (
                 <p className="mt-3">No tasks assigned yet.</p>
               ) : (
@@ -1133,7 +1338,6 @@ const handleMember = async (empid)=>{
                   </table>
                 </div>
               )}
-
               {/* Add/Edit Task Modal (controlled) */}
               {showTaskModal && (
                 <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
@@ -1228,15 +1432,158 @@ const handleMember = async (empid)=>{
                 </div>
               )}
             </div>
+    <div className="card shadow-sm  p-3 mt-4">
+      <div className="card-header bg-dark text-white">
+        <i className="bi bi-trophy me-2"></i> Top Performers (Skills)
+      </div>
+      <div className="table-responsive">
+        <table className="table table-sm table-hover align-middle bg-white mb-0">
+          <thead className="table-light">
+            <tr>
+              <th>Rank</th>
+              <th>Employee</th>
+              <th>Composite Score</th>
+              <th>Skills</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            {leaderboard.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="text-muted small text-center py-3">
+                  No skills found for your team.
+                </td>
+              </tr>
+            ) : (
+              leaderboard.map(({ employee, score }, idx) => {
+                const skills = skillMatrix[employee.EmployeeId] || {};
+                const skillEntries = Object.entries(skills);
+                const quickChips = skillEntries
+                  .sort((a, b) => b[1].prof - a[1].prof)
+                  .slice(0, 4)
+                  .map(([name, s]) => (
+                    <span key={name} className="badge rounded-pill text-bg-light me-1 mb-1">
+                      {name} <span className="fw-semibold">{s.prof}%</span>
+                      {s.cert && <i className="bi bi-award ms-1 text-primary" title="Certified"></i>}
+                    </span>
+                  ));
+                return (
+                  <tr key={employee.EmployeeId}>
+                    <td>
+                      <span className="badge bg-secondary">{idx + 1}</span>
+                    </td>
+                    <td>
+                      <div className="d-flex align-items-center gap-2">
+                        <img
+                          src={employee.profile_picture_url || "https://avatar.iran.liara.run/public"}
+                          alt="Profile"
+                          className="rounded-circle"
+                          width="32"
+                          height="32"
+                          style={{ objectFit: "cover" }}
+                        />
+                        <div>
+                          <div className="fw-semibold">{employee.firstname} {employee.lastname}</div>
+                          <div className="text-muted small">
+                            {employee.post || employee.designation || "—"} · {employee.location || "—"}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="fw-bold">{score}</td>
+                    <td>{quickChips.length > 0 ? quickChips : <span className="text-muted small">No skills</span>}</td>
+                    <td>
+                      {skillEntries.length > 0 ? (
+                        <button
+                          className="btn btn-outline-primary btn-sm"
+                          onClick={() => openModal(employee)}
+                        >
+                          <i className="bi bi-list-check me-1"></i> View All
+                        </button>
+                      ) : (
+                        <span className="text-muted small">—</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+      {/* Modal */}
+      {selectedEmployee && (
+        <div className="modal show d-block" tabIndex="-1" role="dialog" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div className="modal-dialog modal-lg" role="document">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  {selectedEmployee.firstname} {selectedEmployee.lastname} — Skills
+                </h5>
+                <button type="button" className="btn-close" onClick={closeModal}></button>
+              </div>
+              <div className="modal-body">
+                <table className="table table-sm table-bordered align-middle mb-0">
+                  <thead className="table-light">
+                    <tr>
+                      <th>Skill</th>
+                      <th>Proficiency</th>
+                      <th>Progress</th>
+                      <th>Years</th>
+                      <th>Certificate</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(skillMatrix[selectedEmployee.EmployeeId] || {})
+                      .sort((a, b) => b[1].prof - a[1].prof)
+                      .map(([name, s]) => (
+                        <tr key={`${selectedEmployee.EmployeeId}-${name}`}>
+                          <td className="fw-semibold">{name}</td>
+                          <td className="fw-bold">{s.prof}%</td>
+                          <td>
+                            <div className="progress" style={{ height: 6 }}>
+                              <div
+                                className={`progress-bar ${
+                                  s.prof >= 80 ? "bg-success" :
+                                  s.prof >= 50 ? "bg-warning" : "bg-danger"
+                                }`}
+                                style={{ width: `${s.prof}%` }}
+                              />
+                            </div>
+                          </td>
+                          <td>
+                            <span className="badge rounded-pill text-bg-light">{s.years} years</span>
+                          </td>
+                          <td>
+                            {s.cert ? (
+                              <a
+                                href={s.cert}
+                                className="btn btn-sm btn-outline-primary"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <i className="bi bi-award me-1"></i> View
+                              </a>
+                            ) : (
+                              <span className="text-muted small">—</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-secondary" onClick={closeModal}>Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
           </main>
         </div>
       </div>
-
-
-
-
-
-
       {/* Theme toggle: fixed bottom-right */}
       <div className="dropdown position-fixed bottom-0 end-0 mb-3 me-3" style={{ zIndex: 1500 }}>
         <button
@@ -1247,7 +1594,7 @@ const handleMember = async (empid)=>{
           data-bs-toggle="dropdown"
           aria-label="Toggle theme (auto)"
         >
-          <i className="bi bi-circle-half me-2" aria-hidden="true"></i>
+          <i className="bi bi-circle-half mb-2 me-2" aria-hidden="true"></i>
           <span className="visually-hidden" id="bd-theme-text">Toggle theme</span>
         </button>
         <ul className="dropdown-menu dropdown-menu-end shadow" aria-labelledby="bd-theme-text">
@@ -1292,41 +1639,4 @@ const handleMember = async (empid)=>{
     </>
   );
 }
-
-
 export default Dashboard;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

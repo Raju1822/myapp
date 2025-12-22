@@ -35,7 +35,6 @@ const LeaveManager = () => {
         const data = await res.json();
         alert(data.message);
         window.location.reload(true);
-
     };
     const [summary, setSummary] = useState({});
     useEffect(() => {
@@ -64,10 +63,9 @@ const LeaveManager = () => {
         navigate('/member-dashboard');
     };
     const goBack2 = () => {
-        navigate('/dashboard');
+        navigate('/manager-dashboard');
     };
     //Manger Leave Requests
-
     const [summary2, setSummary2] = useState({});
     const [pendingLeaves, setPendingLeaves] = useState([]);
     const [selectedLeave, setSelectedLeave] = useState(null);
@@ -174,8 +172,6 @@ const LeaveManager = () => {
                             </div>
                         </div>
                     </div>
-
-
                     <div className="row">
                         <div className="col-6">
                             <div className="card shadow p-4 mt-4">
@@ -245,14 +241,9 @@ const LeaveManager = () => {
                                 </table>
                             </div>
                         </div>
-
-
                         <div className="col-6 card shadow p-4 mt-4">
-
                             <form onSubmit={handleSubmit}>
-
                                 <h4 className="mb-3">Apply for Leave</h4>
-
                                 <div className="mb-3">
                                     <label className="form-label">Leave Type</label>
                                     <select
@@ -269,7 +260,6 @@ const LeaveManager = () => {
                                         ))}
                                     </select>
                                 </div>
-
                                 <div className="mb-3">
                                     <label className="form-label">Start Date</label>
                                     <input
@@ -280,7 +270,6 @@ const LeaveManager = () => {
                                         required
                                     />
                                 </div>
-
                                 <div className="mb-3">
                                     <label className="form-label">End Date</label>
                                     <input
@@ -291,7 +280,6 @@ const LeaveManager = () => {
                                         required
                                     />
                                 </div>
-
                                 <div className="mb-3">
                                     <label className="form-label">Reason</label>
                                     <textarea
@@ -302,26 +290,15 @@ const LeaveManager = () => {
                                         required
                                     ></textarea>
                                 </div>
-
                                 <button type="submit" className="btn btn-primary">
                                     Submit Leave Request
                                 </button>
-
                             </form>
-
-
                         </div>
-
-
-
-
-
                     </div>
-
                 </div>
             ) : (
                 <div className="container">
-
                     <div className="card shadow-lg m-3">
                         <div className="row">
                             <div className="col-md-9 card-body text-left">
@@ -392,10 +369,8 @@ const LeaveManager = () => {
                             </div>
                         </div>
                     </div>
-
                     <div className="m-3">
                         {/* Summary */}
-
                         {/* Pending Requests Table */}
                         <div className="card shadow p-4 mb-4">
                             <h4 className="mb-3">Pending Leave Requests</h4>
@@ -467,8 +442,6 @@ const LeaveManager = () => {
                         </div>
                     </div>
                 </div>
-
-
             )}
         </>
     );
