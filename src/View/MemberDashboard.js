@@ -1009,7 +1009,7 @@ const MemberDashboard = () => {
               </div>
             </div>
             <div className="mt-3 mt-md-0 text-md-end">
-              <small className="opacity-75">Office : {user?.location || "—"}</small><br />
+              {/* <small className="opacity-75">Office : {user?.location || "—"}</small><br /> */}
               <small className="opacity-75">Employee ID : {user?.EmployeeId || "—"}</small><br/>
               <small className="opacity-75">Manager : {manager[0]?.firstname} {manager[0]?.lastname}</small>
             </div>

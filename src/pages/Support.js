@@ -1,5 +1,6 @@
 
 import React, { useState } from "react";
+import brand from '../logo.svg';
 
 const Support = () => {
   const [formData, setFormData] = useState({ name: "", email: "", message: "" });
@@ -35,7 +36,44 @@ const Support = () => {
   };
 
   return (
-    <div className="container mt-5">
+    <>
+
+{/* Navbar */}
+  <nav className="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm sticky-top">
+    <div className="container">
+      <a className="navbar-brand d-flex align-items-center gap-2" href="/">
+        <img
+          src={brand}
+          alt="Brand"
+          width="36"
+          height="36"
+          className="rounded-circle"
+        />
+        <span className="fw-semibold">Team Productivity</span>
+      </a>
+      <button
+        className="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarNav"
+        aria-controls="navbarNav"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span className="navbar-toggler-icon"></span>
+      </button>
+      <div className="collapse navbar-collapse" id="navbarNav">
+        <ul className="navbar-nav ms-auto">
+          <li className="nav-item"><a className="nav-link active" href="/">Home</a></li>
+          <li className="nav-item"><a className="nav-link" href="/">Gallery</a></li>
+          <li className="nav-item"><a className="nav-link" href="/support">Contact Us</a></li>
+        </ul>
+        </div>
+</div>
+</nav>
+
+
+    <div className="container mt-4">
       <h2 className="text-center mb-4">Support Center</h2>
 
       {/* FAQ Section */}
@@ -166,7 +204,29 @@ const Support = () => {
         </form>
         {status && <p className="mt-3 text-center">{status}</p>}
       </div>
+
+
+
+
+
     </div>
+
+
+
+
+
+<footer className="border-top bg-white mt-5">
+    <div className="container py-3 d-flex flex-column flex-sm-row align-items-center justify-content-between gap-2">
+      <span className="text-muted small">© {new Date().getFullYear()} Team Productivity</span>
+      <div className="d-flex gap-3 small">
+        <a href="/support" className="text-decoration-none">Support</a>
+        <a href="/" className="text-decoration-none">Status</a>
+        <a href="/docs" className="text-decoration-none">Docs</a>
+      </div>
+    </div>
+  </footer>
+
+  </>
   );
 };
 

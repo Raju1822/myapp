@@ -520,8 +520,14 @@ useEffect(() => {
   };
   loadSkills();
 }, [employees]);
-  const openModal = (employee) => setSelectedEmployee(employee);
-  const closeModal = () => setSelectedEmployee(null);
+
+  const [expandedEmployeeId, setExpandedEmployeeId] = useState(null);
+
+  const toggleRow = (employeeId) => {
+    setExpandedEmployeeId((prev) => (prev === employeeId ? null : employeeId));
+  };
+
+
   // ----------------- Render -----------------
   return (
     <>
@@ -1432,10 +1438,21 @@ useEffect(() => {
                 </div>
               )}
             </div>
-    <div className="card shadow-sm  p-3 mt-4">
+
+
+
+
+
+
+
+
+
+    <div className="card shadow-sm p-3 mt-4">
       <div className="card-header bg-dark text-white">
-        <i className="bi bi-trophy me-2"></i> Top Performers (Skills)
+        <i className="bi bi-trophy me-2" />
+        Top Performers (Skills)
       </div>
+
       <div className="table-responsive">
         <table className="table table-sm table-hover align-middle bg-white mb-0">
           <thead className="table-light">
@@ -1447,6 +1464,7 @@ useEffect(() => {
               <th>Details</th>
             </tr>
           </thead>
+
           <tbody>
             {leaderboard.length === 0 ? (
               <tr>
@@ -1458,129 +1476,164 @@ useEffect(() => {
               leaderboard.map(({ employee, score }, idx) => {
                 const skills = skillMatrix[employee.EmployeeId] || {};
                 const skillEntries = Object.entries(skills);
+
                 const quickChips = skillEntries
                   .sort((a, b) => b[1].prof - a[1].prof)
                   .slice(0, 4)
                   .map(([name, s]) => (
                     <span key={name} className="badge rounded-pill text-bg-light me-1 mb-1">
                       {name} <span className="fw-semibold">{s.prof}%</span>
-                      {s.cert && <i className="bi bi-award ms-1 text-primary" title="Certified"></i>}
+                      {s.cert && (
+                        <i className="bi bi-award ms-1 text-primary" title="Certified" />
+                      )}
                     </span>
                   ));
+
+                const isExpanded = expandedEmployeeId === employee.EmployeeId;
+
                 return (
-                  <tr key={employee.EmployeeId}>
-                    <td>
-                      <span className="badge bg-secondary">{idx + 1}</span>
-                    </td>
-                    <td>
-                      <div className="d-flex align-items-center gap-2">
-                        <img
-                          src={employee.profile_picture_url || "https://avatar.iran.liara.run/public"}
-                          alt="Profile"
-                          className="rounded-circle"
-                          width="32"
-                          height="32"
-                          style={{ objectFit: "cover" }}
-                        />
-                        <div>
-                          <div className="fw-semibold">{employee.firstname} {employee.lastname}</div>
-                          <div className="text-muted small">
-                            {employee.post || employee.designation || "—"} · {employee.location || "—"}
+                  <React.Fragment key={employee.EmployeeId}>
+                    {/* main row */}
+                    <tr>
+                      <td>
+                        <span className="badge bg-secondary">{idx + 1}</span>
+                      </td>
+                      <td>
+                        <div className="d-flex align-items-center gap-2">
+                          <img
+                            src={employee.profile_picture_url || "https://avatar.iran.liara.run/public"}
+                            alt="Profile"
+                            className="rounded-circle"
+                            width="32"
+                            height="32"
+                            style={{ objectFit: "cover" }}
+                          />
+                          <div>
+                            <div className="fw-semibold">
+                              {employee.firstname} {employee.lastname}
+                            </div>
+                            <div className="text-muted small">
+                              {employee.post || employee.designation || "—"} · {employee.location || "—"}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="fw-bold">{score}</td>
-                    <td>{quickChips.length > 0 ? quickChips : <span className="text-muted small">No skills</span>}</td>
-                    <td>
-                      {skillEntries.length > 0 ? (
-                        <button
-                          className="btn btn-outline-primary btn-sm"
-                          onClick={() => openModal(employee)}
-                        >
-                          <i className="bi bi-list-check me-1"></i> View All
-                        </button>
-                      ) : (
-                        <span className="text-muted small">—</span>
-                      )}
-                    </td>
-                  </tr>
+                      </td>
+                      <td className="fw-bold">{score}</td>
+                      <td>
+                        {quickChips.length > 0 ? (
+                          quickChips
+                        ) : (
+                          <span className="text-muted small">No skills</span>
+                        )}
+                      </td>
+                      <td>
+                        {skillEntries.length > 0 ? (
+                          <button
+                            type="button"
+                            className={`btn btn-sm ${isExpanded ? "btn-primary" : "btn-outline-primary"}`}
+                            onClick={() => toggleRow(employee.EmployeeId)}
+                            aria-expanded={isExpanded}
+                            aria-controls={`skills-panel-${employee.EmployeeId}`}
+                          >
+                            <i className="bi bi-list-check me-1" />
+                            {isExpanded ? "Hide" : "View All"}
+                          </button>
+                        ) : (
+                          <span className="text-muted small">—</span>
+                        )}
+                      </td>
+                    </tr>
+
+                    {/* inline details panel (single row, below the main row) */}
+                    {isExpanded && (
+                      <tr id={`skills-panel-${employee.EmployeeId}`}>
+                        <td colSpan={5}>
+                          <div className="p-2 border rounded bg-light">
+                            <div className="table-responsive">
+                              <table className="table table-sm table-bordered align-middle mb-0">
+                                <thead className="table-light">
+                                  <tr>
+                                    <th style={{ width: "30%" }}>Skill</th>
+                                    <th style={{ width: "12%" }}>Proficiency</th>
+                                    <th style={{ width: "28%" }}>Progress</th>
+                                    <th style={{ width: "12%" }}>Years</th>
+                                    <th style={{ width: "18%" }}>Certificate</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {skillEntries
+                                    .sort((a, b) => b[1].prof - a[1].prof)
+                                    .map(([name, s]) => (
+                                      <tr key={`${employee.EmployeeId}-${name}`}>
+                                        <td className="fw-semibold">{name}</td>
+                                        <td className="fw-bold">{s.prof}%</td>
+                                        <td>
+                                          <div className="progress" style={{ height: 6 }}>
+                                            <div
+                                              className={`progress-bar ${
+                                                s.prof >= 80
+                                                  ? "bg-success"
+                                                  : s.prof >= 50
+                                                  ? "bg-warning"
+                                                  : "bg-danger"
+                                              }`}
+                                              style={{ width: `${s.prof}%` }}
+                                              aria-valuenow={s.prof}
+                                              aria-valuemin={0}
+                                              aria-valuemax={100}
+                                            />
+                                          </div>
+                                        </td>
+                                        <td>
+                                          <span className="badge rounded-pill text-bg-light">
+                                            {(s.years ?? 0)} years
+                                          </span>
+                                        </td>
+                                        <td>
+                                          {s.cert ? (
+                                            <a
+                                              href={s.cert}
+                                              className="btn btn-sm btn-outline-primary"
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                            >
+                                              <i className="bi bi-award me-1" />
+                                              View
+                                            </a>
+                                          ) : (
+                                            <span className="text-muted small">—</span>
+                                          )}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 );
               })
             )}
           </tbody>
         </table>
       </div>
-      {/* Modal */}
-      {selectedEmployee && (
-        <div className="modal show d-block" tabIndex="-1" role="dialog" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-          <div className="modal-dialog modal-lg" role="document">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">
-                  {selectedEmployee.firstname} {selectedEmployee.lastname} — Skills
-                </h5>
-                <button type="button" className="btn-close" onClick={closeModal}></button>
-              </div>
-              <div className="modal-body">
-                <table className="table table-sm table-bordered align-middle mb-0">
-                  <thead className="table-light">
-                    <tr>
-                      <th>Skill</th>
-                      <th>Proficiency</th>
-                      <th>Progress</th>
-                      <th>Years</th>
-                      <th>Certificate</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Object.entries(skillMatrix[selectedEmployee.EmployeeId] || {})
-                      .sort((a, b) => b[1].prof - a[1].prof)
-                      .map(([name, s]) => (
-                        <tr key={`${selectedEmployee.EmployeeId}-${name}`}>
-                          <td className="fw-semibold">{name}</td>
-                          <td className="fw-bold">{s.prof}%</td>
-                          <td>
-                            <div className="progress" style={{ height: 6 }}>
-                              <div
-                                className={`progress-bar ${
-                                  s.prof >= 80 ? "bg-success" :
-                                  s.prof >= 50 ? "bg-warning" : "bg-danger"
-                                }`}
-                                style={{ width: `${s.prof}%` }}
-                              />
-                            </div>
-                          </td>
-                          <td>
-                            <span className="badge rounded-pill text-bg-light">{s.years} years</span>
-                          </td>
-                          <td>
-                            {s.cert ? (
-                              <a
-                                href={s.cert}
-                                className="btn btn-sm btn-outline-primary"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                <i className="bi bi-award me-1"></i> View
-                              </a>
-                            ) : (
-                              <span className="text-muted small">—</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="modal-footer">
-                <button className="btn btn-secondary" onClick={closeModal}>Close</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
           </main>
         </div>
       </div>

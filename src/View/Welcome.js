@@ -234,7 +234,7 @@ const Welcome = () => {
         <ul className="navbar-nav ms-auto">
           <li className="nav-item"><a className="nav-link active" href="/">Home</a></li>
           <li className="nav-item"><a className="nav-link" href="/">Gallery</a></li>
-          <li className="nav-item"><a className="nav-link" href="/">Contact Us</a></li>
+          <li className="nav-item"><a className="nav-link" href="/support">Contact Us</a></li>
         </ul>
         </div>
 </div>

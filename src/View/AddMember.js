@@ -43,7 +43,7 @@ const AddMember = () => {
       const result = await response.json();
       if (result.success) {
         alert("✅ Member added successfully!");
-        navigate("/dashboard");
+        navigate("/manager-dashboard");
       } else {
         alert("❌ Failed: " + result.message);
       }
@@ -53,7 +53,7 @@ const AddMember = () => {
     }
   };
   const handleCancel = () => {
-    navigate("/dashboard");
+    navigate("/manager-dashboard");
   };
   return (
     <div className="container mt-4">
