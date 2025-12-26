@@ -174,9 +174,9 @@ const LeaveManager = () => {
                     </div>
                     <div className="row">
                         <div className="col-6">
-                            <div className="card shadow p-4 mt-4">
+                            <div className="table-responsive card shadow p-4 mt-4 ">
                                 <h4 className="mb-3">Leave History</h4>
-                                <table className="table table-striped">
+                                <table className="table table-striped ">
                                     <thead>
                                         <tr>
                                             <th>Type</th>
@@ -219,7 +219,7 @@ const LeaveManager = () => {
                         </li>
                         ))}
                     </ul> */}
-                            <div className="card shadow p-4 mt-4">
+                            <div className="card shadow p-4 mt-4 table-responsive">
                                 <h4 className="mb-3"> Holiday</h4>
                                 <table className="table table-striped">
                                     <thead>

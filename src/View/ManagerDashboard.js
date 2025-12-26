@@ -527,6 +527,80 @@ useEffect(() => {
     setExpandedEmployeeId((prev) => (prev === employeeId ? null : employeeId));
   };
 
+   //-----------update password
+
+  // Update Password modal state
+  const [pwdForm, setPwdForm] = useState({
+    current_password: '',
+    new_password: '',
+    confirm_password: '',
+  });
+  const [pwdSubmitting, setPwdSubmitting] = useState(false);
+  const [pwdMessage, setPwdMessage] = useState('');
+
+  // Submit handler for Update Password
+  const handleUpdatePassword = async (e) => {
+    e.preventDefault();
+    setPwdMessage('');
+
+    if (!pwdForm.current_password || !pwdForm.new_password || !pwdForm.confirm_password) {
+      setPwdMessage('Please fill all fields.');
+      return;
+    }
+    if (pwdForm.new_password.length < 8) {
+      setPwdMessage('New password must be at least 8 characters.');
+      return;
+    }
+    if (pwdForm.new_password !== pwdForm.confirm_password) {
+      setPwdMessage('New password and confirmation do not match.');
+      return;
+    }
+
+    setPwdSubmitting(true);
+    try {
+      const res = await fetch('http://localhost:5000/api/change-password', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employee_id: user.EmployeeId,
+          current_password: pwdForm.current_password,
+          new_password: pwdForm.new_password,
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.message || 'Password update failed');
+      }
+
+      setPwdMessage('✅ Password updated. Redirecting you to login…');
+
+      // Close modal after a moment, then force re-login with banner
+      setTimeout(() => {
+        // Close modal
+        const modalEl = document.getElementById('updatePasswordModal');
+        const modalInstance = window.bootstrap.Modal.getInstance(modalEl);
+        modalInstance?.hide();
+        document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+
+        // Log out and redirect to login with success banner
+        localStorage.removeItem('loggedInUser');
+        navigate('/', {
+          state: {
+            loginInfoMessage: '✅ Your password has been updated. Please login with your new password.',
+          },
+        });
+      }, 1200);
+    } catch (err) {
+      console.error('Update password error:', err);
+      setPwdMessage(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setPwdSubmitting(false);
+    }
+  };
+
+
+
 
   // ----------------- Render -----------------
   return (
@@ -787,6 +861,75 @@ useEffect(() => {
               </ul>
             </div>
           </div>
+
+
+
+
+
+{/* Update Password Modal */}
+<div className="modal fade" id="updatePasswordModal" tabIndex="-1" aria-hidden="true">
+  <div className="modal-dialog modal-dialog-centered">
+    <div className="modal-content">
+      <div className="modal-header bg-secondary text-white">
+        <h5 className="modal-title">
+          <i className="bi bi-key-fill me-2"></i> Update Password
+        </h5>
+        <button type="button" className="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div className="modal-body">
+        <form onSubmit={handleUpdatePassword} noValidate>
+          <div className="mb-3">
+            <label className="form-label">Current Password</label>
+            <input
+              type="password"
+              className="form-control"
+              value={pwdForm.current_password}
+              onChange={(e) => setPwdForm({ ...pwdForm, current_password: e.target.value })}
+              required
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">New Password</label>
+            <input
+              type="password"
+              className="form-control"
+              placeholder="At least 8 characters"
+              value={pwdForm.new_password}
+              onChange={(e) => setPwdForm({ ...pwdForm, new_password: e.target.value })}
+              required
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Confirm New Password</label>
+            <input
+              type="password"
+              className="form-control"
+              value={pwdForm.confirm_password}
+              onChange={(e) => setPwdForm({ ...pwdForm, confirm_password: e.target.value })}
+              required
+            />
+          </div>
+
+          {pwdMessage && (
+            <div className={`alert ${pwdMessage.startsWith('✅') ? 'alert-success' : 'alert-warning'}`} role="alert">
+              {pwdMessage}
+            </div>
+          )}
+
+          <div className="d-flex gap-2">
+            <button type="submit" className="btn btn-secondary w-100" disabled={pwdSubmitting}>
+              {pwdSubmitting ? 'Updating…' : 'Update Password'}
+            </button>
+            <button type="button" className="btn btn-light w-100" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
           {/* Main content */}
           <main className="col-md-9 ms-sm-auto col-lg-10 px-md-4">
             {/* Header & filter */}
@@ -835,8 +978,28 @@ useEffect(() => {
                         Update Profile
                       </button>
                     </li>
-                    {/* <li><button class="btn btn-outline-success m-2">Today</button></li>
-                    <li><button class="btn btn-outline-success m-2">This week</button></li> */}
+                    {/* <li><button class="btn btn-outline-success m-2">Today</button></li>*/}
+                    <li>
+
+
+
+
+<button
+  type="button"
+  className="btn btn-outline-secondary dropdown-item"
+  data-bs-toggle="modal"
+  data-bs-target="#updatePasswordModal"
+>
+  <i className="bi bi-key-fill me-1"></i> Update Password
+</button>
+
+
+
+
+
+
+
+                      </li>
                     <li>
                       <button type="button" className="btn btn-outline-info m-2 dropdown-item" onClick={ShowMembers}>
                         <i className="bi bi-people-fill me-1"></i>Team Member

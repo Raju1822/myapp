@@ -226,6 +226,81 @@ const MemberDashboard = () => {
     // eslint-disable-next-line
   }, []);
   const rotatingQuote = quotes[quoteIdx];
+
+  //-----------update password
+
+// Update Password modal state
+const [pwdForm, setPwdForm] = useState({
+  current_password: '',
+  new_password: '',
+  confirm_password: '',
+});
+const [pwdSubmitting, setPwdSubmitting] = useState(false);
+const [pwdMessage, setPwdMessage] = useState('');
+
+// Submit handler for Update Password
+const handleUpdatePassword = async (e) => {
+  e.preventDefault();
+  setPwdMessage('');
+
+  if (!pwdForm.current_password || !pwdForm.new_password || !pwdForm.confirm_password) {
+    setPwdMessage('Please fill all fields.');
+    return;
+  }
+  if (pwdForm.new_password.length < 8) {
+    setPwdMessage('New password must be at least 8 characters.');
+    return;
+  }
+  if (pwdForm.new_password !== pwdForm.confirm_password) {
+    setPwdMessage('New password and confirmation do not match.');
+    return;
+  }
+
+  setPwdSubmitting(true);
+  try {
+    const res = await fetch('http://localhost:5000/api/change-password', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        employee_id: user.EmployeeId,
+        current_password: pwdForm.current_password,
+        new_password: pwdForm.new_password,
+      }),
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data?.success) {
+      throw new Error(data?.message || 'Password update failed');
+    }
+
+    setPwdMessage('✅ Password updated. Redirecting you to login…');
+
+    // Close modal after a moment, then force re-login with banner
+    setTimeout(() => {
+      // Close modal
+      const modalEl = document.getElementById('updatePasswordModal');
+      const modalInstance = window.bootstrap.Modal.getInstance(modalEl);
+      modalInstance?.hide();
+      document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+
+      // Log out and redirect to login with success banner
+      localStorage.removeItem('loggedInUser');
+      navigate('/', {
+        state: {
+          loginInfoMessage: '✅ Your password has been updated. Please login with your new password.',
+        },
+      });
+    }, 1200);
+  } catch (err) {
+    console.error('Update password error:', err);
+    setPwdMessage(err.message || 'Something went wrong. Please try again.');
+  } finally {
+    setPwdSubmitting(false);
+  }
+};
+
+
+
   // return (
   //   <div className="container mt-4">
   //     {/* Header */}
@@ -950,45 +1025,105 @@ const MemberDashboard = () => {
   // );
   return (
     <div className="container-fluid p-0 bg-light">
-      {/* Top Navbar */}
-      <nav className="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow">
-        <div className="container-fluid">
-          <a className="navbar-brand d-flex align-items-center" href="/">
-            <i className="bi bi-speedometer2 me-2"></i>
-            Member Dashboard
+
+<nav className="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+  <div className="container-fluid">
+    {/* Brand */}
+    <a className="navbar-brand d-flex align-items-center" href="/">
+      <i className="bi bi-speedometer2 me-2"></i>
+      <span className="fw-bold">Member Dashboard</span>
+    </a>
+
+    {/* Toggler for mobile */}
+    <button
+      className="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#topNav"
+      aria-controls="topNav"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span className="navbar-toggler-icon"></span>
+    </button>
+
+    {/* Navbar content */}
+    <div className="collapse navbar-collapse" id="topNav">
+      {/* Left: Navigation links */}
+      <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+        <li className="nav-item">
+          <a className="nav-link" href="#overview">
+            <i className="bi bi-house-door-fill me-1"></i> Overview
           </a>
-          <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topNav">
-            <span className="navbar-toggler-icon"></span>
-          </button>
-          <div className="collapse navbar-collapse" id="topNav">
-            <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-              <li className="nav-item"><a className="nav-link" href="#overview">Overview</a></li>
-              <li className="nav-item"><a className="nav-link" href="#skills">Skills</a></li>
-              <li className="nav-item"><a className="nav-link" href="#tasks">Tasks</a></li>
-              <li className="nav-item"><a className="nav-link" href="#leave">Leave</a></li>
-            </ul>
-            <div className="d-flex align-items-center gap-2">
-              <button type="button" className="btn btn-outline-info" onClick={ShowMembers}>
-                <i className="bi bi-people-fill me-1"></i> Members
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline-success"
-                data-bs-toggle="modal"
-                data-bs-target="#updateProfileModal"
-              >
-                <i className="bi bi-pencil-square me-1"></i> Update Profile
-              </button>
-              <a href="/common-review" className="btn btn-outline-warning">
-                <i className="bi bi-list-check me-1"></i> Common Review
-              </a>
-              <button type="button" className="btn btn-outline-danger" onClick={handleLogout}>
-                <i className="bi bi-box-arrow-right me-1"></i> Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+        </li>
+        <li className="nav-item">
+          <a className="nav-link" href="#skills">
+            <i className="bi bi-lightbulb-fill me-1"></i> Skills
+          </a>
+        </li>
+        <li className="nav-item">
+          <a className="nav-link" href="#tasks">
+            <i className="bi bi-list-task me-1"></i> Tasks
+          </a>
+        </li>
+        <li className="nav-item">
+          <a className="nav-link" href="#leave">
+            <i className="bi bi-calendar-event-fill me-1"></i> Leave
+          </a>
+        </li>
+      </ul>
+
+      {/* Right: Action buttons */}
+      <div className="d-flex align-items-center gap-2">
+        {/* Members */}
+        <button
+          type="button"
+          className="btn btn-light btn-sm"
+          onClick={ShowMembers}
+        >
+          <i className="bi bi-people-fill me-1"></i> Members
+        </button>
+
+        {/* Update Password */}
+        <button
+          type="button"
+          className="btn btn-outline-light btn-sm"
+          data-bs-toggle="modal"
+          data-bs-target="#updatePasswordModal"
+        >
+          <i className="bi bi-key-fill me-1"></i> Password
+        </button>
+
+        {/* Update Profile */}
+        <button
+          type="button"
+          className="btn btn-outline-light btn-sm"
+          data-bs-toggle="modal"
+          data-bs-target="#updateProfileModal"
+        >
+          <i className="bi bi-pencil-square me-1"></i> Profile
+        </button>
+
+        {/* Common Review */}
+        <a href="/common-review" className="btn btn-outline-light btn-sm">
+          <i className="bi bi-list-check me-1"></i> Review
+        </a>
+
+        {/* Logout */}
+        <button
+          type="button"
+          className="btn btn-danger btn-sm"
+          onClick={handleLogout}
+        >
+          <i className="bi bi-box-arrow-right me-1"></i> Logout
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+
+
       {/* Header */}
       <header className="bg-primary text-white py-4 mb-4">
         <div className="container">
@@ -1016,6 +1151,80 @@ const MemberDashboard = () => {
           </div>
         </div>
       </header>
+
+
+
+
+
+
+
+
+{/* Update Password Modal */}
+<div className="modal fade" id="updatePasswordModal" tabIndex="-1" aria-hidden="true">
+  <div className="modal-dialog modal-dialog-centered">
+    <div className="modal-content">
+      <div className="modal-header bg-secondary text-white">
+        <h5 className="modal-title">
+          <i className="bi bi-key-fill me-2"></i> Update Password
+        </h5>
+        <button type="button" className="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div className="modal-body">
+        <form onSubmit={handleUpdatePassword} noValidate>
+          <div className="mb-3">
+            <label className="form-label">Current Password</label>
+            <input
+              type="password"
+              className="form-control"
+              value={pwdForm.current_password}
+              onChange={(e) => setPwdForm({ ...pwdForm, current_password: e.target.value })}
+              required
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">New Password</label>
+            <input
+              type="password"
+              className="form-control"
+              placeholder="At least 8 characters"
+              value={pwdForm.new_password}
+              onChange={(e) => setPwdForm({ ...pwdForm, new_password: e.target.value })}
+              required
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Confirm New Password</label>
+            <input
+              type="password"
+              className="form-control"
+              value={pwdForm.confirm_password}
+              onChange={(e) => setPwdForm({ ...pwdForm, confirm_password: e.target.value })}
+              required
+            />
+          </div>
+
+          {pwdMessage && (
+            <div className={`alert ${pwdMessage.startsWith('✅') ? 'alert-success' : 'alert-warning'}`} role="alert">
+              {pwdMessage}
+            </div>
+          )}
+
+          <div className="d-flex gap-2">
+            <button type="submit" className="btn btn-secondary w-100" disabled={pwdSubmitting}>
+              {pwdSubmitting ? 'Updating…' : 'Update Password'}
+            </button>
+            <button type="button" className="btn btn-light w-100" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
       <main className="container">
         {/* Overview / Info Grid */}
         <section id="overview" className="mb-4">
