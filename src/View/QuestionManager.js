@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom'
 import brand from '../logo.svg';
+const API_BASE_URL = 'http://localhost:5000';
 export default function QuestionManager() {
   const user = JSON.parse(localStorage.getItem('loggedInUser')) || {};
   const [skills, setSkills] = useState([]);
@@ -13,13 +14,13 @@ export default function QuestionManager() {
   const [newQuestion, setNewQuestion] = useState({ text: '', difficulty: 'Easy', options: [{ text: '', is_correct: false }] });
   const [editingQuestion, setEditingQuestion] = useState(null);
   useEffect(() => {
-    fetch('http://localhost:5000/api/skills')
+    fetch(`${API_BASE_URL}/api/skills`)
       .then(res => res.json())
       .then(data => setSkills(data));
   }, []);
   useEffect(() => {
     if (selectedSkill) {
-      fetch(`http://localhost:5000/api/questions/${selectedSkill}`)
+      fetch(`${API_BASE_URL}/api/questions/${selectedSkill}`)
         .then(res => res.json())
         .then(data => {
           setQuestions(data);
@@ -56,7 +57,7 @@ export default function QuestionManager() {
       difficulty: newQuestion.difficulty,
       options: newQuestion.options.map(opt => ({ option_text: opt.text, is_correct: opt.is_correct }))
     };
-    fetch('http://localhost:5000/api/questions', {
+    fetch(`${API_BASE_URL}/api/questions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -69,7 +70,7 @@ export default function QuestionManager() {
       });
   };
   const refreshQuestions = () => {
-    fetch(`http://localhost:5000/api/questions/${selectedSkill}`)
+    fetch(`${API_BASE_URL}/api/questions/${selectedSkill}`)
       .then(res => res.json())
       .then(data => {
         setQuestions(data);
@@ -77,7 +78,7 @@ export default function QuestionManager() {
       });
   };
   const handleDeleteQuestion = (id) => {
-    fetch(`http://localhost:5000/api/questions/${id}`, { method: 'DELETE' })
+    fetch(`${API_BASE_URL}/api/questions/${id}`, { method: 'DELETE' })
       .then(() => {
         alert('Question deleted!');
         setQuestions(questions.filter(q => q.question_id !== id));
@@ -87,7 +88,7 @@ export default function QuestionManager() {
     setEditingQuestion({ ...q });
   };
   const handleUpdateQuestion = () => {
-    fetch(`http://localhost:5000/api/questions/${editingQuestion.question_id}`, {
+    fetch(`${API_BASE_URL}/api/questions/${editingQuestion.question_id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -101,7 +102,7 @@ export default function QuestionManager() {
     });
   };
   const handleOptionUpdate = (optionId, text, isCorrect) => {
-    fetch(`http://localhost:5000/api/options/${optionId}`, {
+    fetch(`${API_BASE_URL}/api/options/${optionId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ option_text: text, is_correct: isCorrect })

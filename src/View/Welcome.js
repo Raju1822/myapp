@@ -216,32 +216,41 @@ useEffect(() => {
           <div className="container">
             <div className="row align-items-center g-4">
               {/* Left: Hero */}
-              <div className="col-12 col-lg-6">
-                <div className="p-4 p-lg-5">
-                  <h1 className="fw-bold mb-3 text-primary">
-                    Welcome to Team Productivity Dashboard
-                  </h1>
-                  <p className="lead text-secondary mb-4">
-                    Track tasks, manage, and boost productivity. Sign in to access your personalized dashboard and start collaborating efficiently.
-                  </p>
-                  <div className="d-flex align-items-center gap-3">
-                    <img
-                      src={placeholder}
-                      alt="Hero"
-                      className="img-fluid rounded shadow-sm"
-                      style={{ maxWidth: '220px' }}
-                    />
-                    <ul className="list-unstyled mb-0 small">
-                      <li className="mb-2">✅ Task management &amp; progress tracking</li>
-                      <li className="mb-2">✅ Leave Management &amp; tracking</li>
-                      <li className="mb-2">✅ Skill mapping &amp; team insights</li>
-                      <li className="mb-2">✅ Skill assessments &amp; certifications</li>
-                      <li className="mb-2">✅ Monthly Review &amp; feedback system</li>
-                      <li className="mb-2">✅ Real-time collaboration &amp; updates</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
+
+<div className="col-12 col-lg-6">
+  <div className="p-4 p-lg-5">
+    <h1 className="fw-bold mb-3 text-primary text-center text-lg-start">
+      Welcome to Team Productivity Dashboard
+    </h1>
+    <p className="lead text-secondary mb-4 text-center text-lg-start">
+      Track tasks, manage, and boost productivity. Sign in to access your personalized dashboard and start collaborating efficiently.
+    </p>
+
+    {/* Responsive layout for image + list */}
+    <div className="d-flex flex-column flex-md-row align-items-center gap-4">
+      {/* Image */}
+      <div className="text-center">
+        <img
+          src={placeholder}
+          alt="Hero"
+          className="img-fluid rounded shadow-sm"
+          style={{ maxWidth: "220px" }}
+        />
+      </div>
+
+      {/* Features list */}
+      <ul className="list-unstyled mb-0 small text-right text-md-start ">
+        <li className="mb-2">✅ Task management & progress tracking</li>
+        <li className="mb-2">✅ Leave Management & tracking</li>
+        <li className="mb-2">✅ Skill mapping & team insights</li>
+        <li className="mb-2">✅ Skill assessments & certifications</li>
+        <li className="mb-2">✅ Monthly Review & feedback system</li>
+        <li className="mb-2">✅ Real-time collaboration & updates</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
 
               {/* Right: Login Card */}
               <div className="col-12 col-lg-6">

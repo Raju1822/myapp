@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+const API_BASE_URL = 'http://localhost:5000';
 export default function Exam() {
   // -----------------------------
   // Context & Route State
@@ -44,7 +45,25 @@ export default function Exam() {
   // -----------------------------
   // Fetch questions (only after Start Exam)
   // -----------------------------
-  const fetchQuestions = useCallback(async () => {
+
+
+  //-----------------------------
+
+
+
+// How many questions should the exam contain
+const EXAM_QUESTION_COUNT = 10; // set to 12 if you prefer
+
+// Utility: immutable Fisher–Yates shuffle
+function shuffleArrayImmutable(arr) {
+  const a = arr.slice(); // copy
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+const fetchQuestions = useCallback(async () => {
     if (!skillId) {
       setError('Invalid skill. Please go back and select a valid skill.');
       return;
@@ -52,10 +71,18 @@ export default function Exam() {
     try {
       setLoading(true);
       setError('');
-      const res = await fetch(`http://localhost:5000/api/questions/${skillId}`);
+      const res = await fetch(`${API_BASE_URL}/api/questions/${skillId}`);
       if (!res.ok) throw new Error(`Failed to fetch questions (status: ${res.status})`);
       const data = await res.json();
-      setQuestions(Array.isArray(data) ? data : []);
+
+      const allQuestions = Array.isArray(data) ? data : [];
+
+      // Shuffle once, then sample the first N
+      const shuffled = shuffleArrayImmutable(allQuestions);
+      const desiredCount = Math.min(EXAM_QUESTION_COUNT, shuffled.length);
+      const sampled = shuffled.slice(0, desiredCount);
+
+      setQuestions(sampled);
     } catch (err) {
       console.error('Fetch error:', err);
       setError('Unable to load questions. Please try again later.');
@@ -102,7 +129,7 @@ export default function Exam() {
 
     // Save result to backend
     try {
-      const res = await fetch('http://localhost:5000/api/exam/submit', {
+      const res = await fetch(`${API_BASE_URL}/api/exam/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -118,7 +145,7 @@ export default function Exam() {
 
       // Generate certificate if pass threshold (>= 80%)
       if (data?.success && scorePercent >= 80) {
-        const certRes = await fetch('http://localhost:5000/api/certificate/generate', {
+        const certRes = await fetch(`${API_BASE_URL}/api/certificate/generate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -177,7 +204,14 @@ export default function Exam() {
     setAnswers((prev) => ({ ...prev, [questionId]: optionId }));
   };
 
+
+
+
+
+
+
   const goBack = () => navigate(-1);
+
 
   // -----------------------------
   // Render

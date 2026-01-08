@@ -18,6 +18,9 @@ import {
   RadialLinearScale,
   Filler
 } from 'chart.js';
+
+const API_BASE_URL = 'http://localhost:5000';
+
 function Dashboard() {
   // ----------------- Theme handling -----------------
   const [theme, setTheme] = useState('auto'); // 'light' | 'dark' | 'auto'
@@ -53,7 +56,7 @@ function Dashboard() {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   useEffect(() => {
     if (user && user.EmployeeId) {
-      fetch(`http://localhost:5000/api/mapped-emp/${user.EmployeeId}`)
+      fetch(`${API_BASE_URL}/api/mapped-emp/${user.EmployeeId}`)
         .then(res => res.json())
         .then(data => {
           const list = Array.isArray(data) ? data : (data?.data ?? []);
@@ -75,7 +78,7 @@ function Dashboard() {
   useEffect(() => {
     if (!user?.EmployeeId) return;
     // Members
-    fetch(`http://localhost:5000/api/directmembers/${user.EmployeeId}`)
+    fetch(`${API_BASE_URL}/api/directmembers/${user.EmployeeId}`)
       .then(response => response.json())
       .then(data => {
         setMembers(Array.isArray(data) ? data : (data?.data ?? []));
@@ -87,7 +90,7 @@ function Dashboard() {
     // Tasks
     const fetchTasks = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/tasks/${user.EmployeeId}`);
+        const res = await fetch(`${API_BASE_URL}/api/tasks/${user.EmployeeId}`);
         const data = await res.json();
         setTasks(Array.isArray(data) ? data : (data?.data ?? []));
       } catch (error) {
@@ -143,8 +146,8 @@ function Dashboard() {
   const handleSubmitTask = async (e) => {
     e.preventDefault();
     const url = isEditing
-      ? `http://localhost:5000/api/update-task/${taskData.task_id}`
-      : 'http://localhost:5000/api/add-task';
+      ? `${API_BASE_URL}/api/update-task/${taskData.task_id}`
+      : `${API_BASE_URL}/api/add-task`;
     const method = isEditing ? 'PATCH' : 'POST';
     const payload = { ...taskData, assigned_by: user.EmployeeId };
     try {
@@ -158,7 +161,7 @@ function Dashboard() {
       setShowTaskModal(false);
       // Refresh tasks
       try {
-        const res = await fetch(`http://localhost:5000/api/tasks/${user.EmployeeId}`);
+        const res = await fetch(`${API_BASE_URL}/api/tasks/${user.EmployeeId}`);
         const data = await res.json();
         setTasks(Array.isArray(data) ? data : (data?.data ?? []));
       } catch (error) {
@@ -172,14 +175,14 @@ function Dashboard() {
   const handleDeleteTask = async (taskId) => {
     if (window.confirm('Are you sure you want to delete this task?')) {
       try {
-        const response = await fetch(`http://localhost:5000/api/delete-task/${taskId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/delete-task/${taskId}`, {
           method: 'DELETE',
         });
         const result = await response.json();
         alert(result.message || 'Task deleted');
         // Refresh tasks
         try {
-          const res = await fetch(`http://localhost:5000/api/tasks/${user.EmployeeId}`);
+          const res = await fetch(`${API_BASE_URL}/api/tasks/${user.EmployeeId}`);
           const data = await res.json();
           setTasks(Array.isArray(data) ? data : (data?.data ?? []));
         } catch (error) {
@@ -191,49 +194,120 @@ function Dashboard() {
       }
     }
   };
-  //-----------------------
-  const [chartData, setChartData] = useState({
-    labels: [],
-    datasets: []
-  });
+
+
+
+  const toArray = (data) => (Array.isArray(data) ? data : data?.data || []);
+
+  const [chartData, setChartData] = useState({ labels: [], datasets: [] });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // Severity bands (Option A: multiple datasets)
+  const BANDS = [
+    { key: "Low (≤2)", min: 0, max: 2, color: "rgba(75, 192, 192, 0.7)", border: "rgba(75, 192, 192, 1)" },   // Green
+    { key: "Moderate (3–5)", min: 3, max: 5, color: "rgba(255, 159, 64, 0.7)", border: "rgba(255, 159, 64, 1)" },   // Orange
+    { key: "High (6–9)", min: 6, max: 9, color: "rgba(54, 162, 235, 0.7)", border: "rgba(54, 162, 235, 1)" },   // Blue
+    { key: "Critical (≥10)", min: 10, max: Infinity, color: "rgba(255, 99, 132, 0.7)", border: "rgba(255, 99, 132, 1)" }, // Red
+  ];
+
   useEffect(() => {
-    const fetchChartData = async () => {
+    async function fetchChartData() {
+      if (!user?.EmployeeId) return;
+      setLoading(true);
+      setError("");
       try {
-        // Fetch members
-        const membersRes = await fetch(`http://localhost:5000/api/directmembers/${user.EmployeeId}`);
+        // Fetch members directly reporting to the user
+        const membersRes = await fetch(`${API_BASE_URL}/api/directmembers/${user.EmployeeId}`);
         const membersData = await membersRes.json();
-        const members = Array.isArray(membersData) ? membersData : (membersData.data || []);
-        // Fetch tasks
-        const tasksRes = await fetch(`http://localhost:5000/api/tasks/${user.EmployeeId}`);
+        const members = toArray(membersData);
+
+        // Fetch tasks visible to the user (manager scope)
+        const tasksRes = await fetch(`${API_BASE_URL}/api/tasks/${user.EmployeeId}`);
         const tasksData = await tasksRes.json();
-        const tasks = Array.isArray(tasksData) ? tasksData : (tasksData.data || []);
-        // Count tasks per member
-        const labels = members.map(m => `${m.firstname} ${m.lastname}`);
-        const counts = members.map(m => tasks.filter(t => t.assigned_to === m.EmployeeId).length);
-        const colors = counts.map(count => {
-          if (count <= 2) return "rgba(75, 192, 75, 0.7)"; // Green
-          if (count <= 5) return "rgba(255, 159, 64, 0.7)"; // Orange
-          if (count <= 9) return "rgba(226, 98, 83, 0.7)"; // Blue
-          return "rgba(241, 9, 59, 0.7)"; // Red
-        });
-        // Update chart data
-        setChartData({
-          labels,
-          datasets: [
-            {
-              label: 'Tasks',
-              data: counts,
-              backgroundColor: colors
-            }
-          ]
-        });
+        const tasks = toArray(tasksData);
+
+        // Labels: member full names
+        const labels = members.map((m) => `${m.firstname} ${m.lastname}`);
+
+        // Counts: non-completed tasks per member
+        const counts = members.map(
+          (m) => tasks.filter((t) => t.assigned_to === m.EmployeeId && t.status !== "Completed").length
+        );
+
+        // Build datasets for each band; bar shown only where member count falls into that band
+        const datasets = BANDS.map((band) => ({
+          label: band.key,
+          data: counts.map((c) => (c >= band.min && c <= band.max ? c : null)),
+          backgroundColor: band.color,
+          borderColor: band.border,
+          borderWidth: 1,
+          // optional: make bars a little wider
+          barPercentage: 0.9,
+          categoryPercentage: 0.8,
+          // hint Chart.js to skip nulls (it already does, but explicit is ok)
+          skipNull: true,
+        }));
+
+        setChartData({ labels, datasets });
       } catch (err) {
-        console.error('Error building chart:', err);
+        console.error("Error building chart:", err);
+        setError("Unable to load chart data.");
+        setChartData({ labels: [], datasets: [] });
+      } finally {
+        setLoading(false);
       }
-    };
+    }
     fetchChartData();
-  }, [user.EmployeeId]);
-  // Derived KPI: Completion %
+    // eslint-disable-next-line
+  }, [user?.EmployeeId]);
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "bottom", // shows one legend item per dataset (our 4 bands)
+      },
+      tooltip: {
+        callbacks: {
+          // Show band label + value
+          label: (ctx) => {
+            const value = ctx.raw;
+            if (value == null) return ""; // skip nulls
+            const label = ctx.dataset.label || "Tasks";
+            return `${label}: ${value} task${value === 1 ? "" : "s"}`;
+          },
+          // Show member name in title
+          title: (items) => {
+            const i = items?.[0];
+            return i ? i.label : "";
+          },
+        },
+      },
+      title: {
+        display: true,
+        text: "Open Tasks per Member (Completed excluded)",
+      },
+    },
+    scales: {
+      x: {
+        title: { display: true, text: "Members" },
+        ticks: { autoSkip: false, maxRotation: 0, minRotation: 0 },
+      },
+      y: {
+        beginAtZero: true,
+        ticks: { precision: 0 },
+        title: { display: true, text: "Task count" },
+      },
+    },
+  };
+
+
+
+
+
+
   const completionPct =
     tasks.length > 0
       ? Math.round((tasks.filter(t => (t.status ?? 'Pending') === 'Completed').length / tasks.length) * 100)
@@ -249,7 +323,7 @@ function Dashboard() {
   //     ],
   //   };
   // Register components for Line chart
-  ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, ArcElement, ChartDataLabels,RadialLinearScale, Filler, Title, Tooltip, Legend);
+  ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, ArcElement, ChartDataLabels, RadialLinearScale, Filler, Title, Tooltip, Legend);
   // const Data = {
   //   labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
   //   datasets: [
@@ -385,7 +459,7 @@ function Dashboard() {
       if (selectedFile) {
         formData.append("profile_picture", selectedFile);
       }
-      const response = await fetch("http://localhost:5000/api/update-profile", {
+      const response = await fetch(`${API_BASE_URL}/api/update-profile`, {
         method: "POST",
         body: formData,
       });
@@ -394,7 +468,7 @@ function Dashboard() {
         alert(result.message || "Profile Updated");
         // ✅ Fetch updated user details from backend
         const updatedUserResponse = await fetch(
-          `http://localhost:5000/api/user/${userData.EmployeeId}`
+          `${API_BASE_URL}/api/user/${userData.EmployeeId}`
         );
         const updatedUser = await updatedUserResponse.json();
         // ✅ Update state and localStorage with new profile picture URL
@@ -417,18 +491,18 @@ function Dashboard() {
   // const handleRemoveMember  = async (empid) => {
   //     alert(empid);
   //   };
-//---------------------------------------
-const [leave_request, setLeaveRequest] = useState({});
- useEffect(() => {
-        fetch(`http://localhost:5000/api/leave/manager-summary/${user.EmployeeId}`)
-            .then(res => res.json())
-            .then(data => setLeaveRequest(data));
-});
+  //---------------------------------------
+  const [leave_request, setLeaveRequest] = useState({});
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/leave/manager-summary/${user.EmployeeId}`)
+      .then(res => res.json())
+      .then(data => setLeaveRequest(data));
+  });
   //----------------------------------------
   //Show Members hierarchy
   const [manager, setManager] = useState([]);
   useEffect(() => {
-    fetch(`http://localhost:5000/api/manager/${user.EmployeeId}`)
+    fetch(`${API_BASE_URL}/api/manager/${user.EmployeeId}`)
       .then((res) => res.json())
       .then((data) => setManager(data));
   });
@@ -436,7 +510,7 @@ const [leave_request, setLeaveRequest] = useState({});
   const ShowMembers = async () => {
     if (!user?.EmployeeId) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/directmembers/${user.mapped_to}`);
+      const res = await fetch(`${API_BASE_URL}/api/directmembers/${user.mapped_to}`);
       const data = await res.json();
       const list = Array.isArray(data) ? data : (data?.data || []);
       setMembers1(list);
@@ -448,78 +522,78 @@ const [leave_request, setLeaveRequest] = useState({});
       setMembers([]);
     }
   };
-// ===================== Skills comparison state =====================
-const [skillMatrix, setSkillMatrix] = useState({}); // { employeeId: { skillName: { prof, years, cert } } }
-// ---- Composite scoring utility (simple, logical, explainable) ----
-// Centralized weights (must sum to 1)
-// ---- Option A: Tiered points (very explainable) ----
-const profPoints = (p) => {
-  const val = Math.max(0, Math.min(Number(p || 0), 100));
-  if (val < 25) return 2;
-  if (val < 50) return 4;
-  if (val < 75) return 7;
-  return 10;
-};
-const expPoints = (years) => {
-  const y = Math.min(Number(years || 0), 10);
-  if (y <= 1) return 2;
-  if (y <= 4) return 4;
-  if (y <= 7) return 7;
-  return 10;
-};
-const certPoints = (cert) => {
-  const hasCert = typeof cert === 'boolean'
-    ? cert
-    : Boolean(cert && String(cert).trim() !== '');
-  return hasCert ? 2 : 0;
-};
-const skillScore = (p, y, cert) => {
-  return profPoints(p) + expPoints(y) + certPoints(cert); // 0..22
-};
-const leaderboard = React.useMemo(() => {
-  return employees.map(e => {
-    const skills = skillMatrix[e.EmployeeId] || {};
-    const entries = Object.values(skills); // [{prof,years,cert}, ...]
-    if (entries.length === 0) return { employee: e, score: 0 };
-    const total = entries.reduce((sum, s) => sum + skillScore(s.prof, s.years, s.cert), 0);
-    const avg = Math.round(total / entries.length); // avg points
-    return { employee: e, score: avg };
-  }).sort((a, b) => b.score - a.score);
-  // eslint-disable-next-line
-}, [employees, skillMatrix]);
-//---------------------------------------------
-const API = 'http://localhost:5000';
-useEffect(() => {
-  const loadSkills = async () => {
-    if (!employees || employees.length === 0) {
-      setSkillMatrix({});
-      return;
-    }
-    const entries = await Promise.all(
-      employees.map(async (e) => {
-        try {
-          const res = await fetch(`${API}/api/user-skills/${e.EmployeeId}`);
-          const data = await res.json();
-          const map = {};
-          (Array.isArray(data) ? data : []).forEach(s => {
-            map[s.skill_name] = {
-              prof: Number(s.proficiency_percent || 0),
-              years: Number(s.years_of_experience || 0),
-              cert: s.certificate || ''
-            };
-          });
-          return [e.EmployeeId, map];
-        } catch (err) {
-          console.error('load skills error for', e.EmployeeId, err);
-          return [e.EmployeeId, {}];
-        }
-      })
-    );
-    const matrix = Object.fromEntries(entries);
-    setSkillMatrix(matrix);
+  // ===================== Skills comparison state =====================
+  const [skillMatrix, setSkillMatrix] = useState({}); // { employeeId: { skillName: { prof, years, cert } } }
+  // ---- Composite scoring utility (simple, logical, explainable) ----
+  // Centralized weights (must sum to 1)
+  // ---- Option A: Tiered points (very explainable) ----
+  const profPoints = (p) => {
+    const val = Math.max(0, Math.min(Number(p || 0), 100));
+    if (val < 25) return 2;
+    if (val < 50) return 4;
+    if (val < 75) return 7;
+    return 10;
   };
-  loadSkills();
-}, [employees]);
+  const expPoints = (years) => {
+    const y = Math.min(Number(years || 0), 10);
+    if (y <= 1) return 2;
+    if (y <= 4) return 4;
+    if (y <= 7) return 7;
+    return 10;
+  };
+  const certPoints = (cert) => {
+    const hasCert = typeof cert === 'boolean'
+      ? cert
+      : Boolean(cert && String(cert).trim() !== '');
+    return hasCert ? 2 : 0;
+  };
+  const skillScore = (p, y, cert) => {
+    return profPoints(p) + expPoints(y) + certPoints(cert); // 0..22
+  };
+  const leaderboard = React.useMemo(() => {
+    return employees.map(e => {
+      const skills = skillMatrix[e.EmployeeId] || {};
+      const entries = Object.values(skills); // [{prof,years,cert}, ...]
+      if (entries.length === 0) return { employee: e, score: 0 };
+      const total = entries.reduce((sum, s) => sum + skillScore(s.prof, s.years, s.cert), 0);
+      const avg = Math.round(total / entries.length); // avg points
+      return { employee: e, score: avg };
+    }).sort((a, b) => b.score - a.score);
+    // eslint-disable-next-line
+  }, [employees, skillMatrix]);
+  //---------------------------------------------
+
+  useEffect(() => {
+    const loadSkills = async () => {
+      if (!employees || employees.length === 0) {
+        setSkillMatrix({});
+        return;
+      }
+      const entries = await Promise.all(
+        employees.map(async (e) => {
+          try {
+            const res = await fetch(`${API_BASE_URL}/api/user-skills/${e.EmployeeId}`);
+            const data = await res.json();
+            const map = {};
+            (Array.isArray(data) ? data : []).forEach(s => {
+              map[s.skill_name] = {
+                prof: Number(s.proficiency_percent || 0),
+                years: Number(s.years_of_experience || 0),
+                cert: s.certificate || ''
+              };
+            });
+            return [e.EmployeeId, map];
+          } catch (err) {
+            console.error('load skills error for', e.EmployeeId, err);
+            return [e.EmployeeId, {}];
+          }
+        })
+      );
+      const matrix = Object.fromEntries(entries);
+      setSkillMatrix(matrix);
+    };
+    loadSkills();
+  }, [employees]);
 
   const [expandedEmployeeId, setExpandedEmployeeId] = useState(null);
 
@@ -527,7 +601,7 @@ useEffect(() => {
     setExpandedEmployeeId((prev) => (prev === employeeId ? null : employeeId));
   };
 
-   //-----------update password
+  //-----------update password
 
   // Update Password modal state
   const [pwdForm, setPwdForm] = useState({
@@ -558,7 +632,7 @@ useEffect(() => {
 
     setPwdSubmitting(true);
     try {
-      const res = await fetch('http://localhost:5000/api/change-password', {
+      const res = await fetch(`${API_BASE_URL}/api/change-password`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -602,6 +676,82 @@ useEffect(() => {
 
 
 
+  // ---- Activity (derived from existing state) ----
+  const overdueTasks = tasks.filter(t => {
+    // due_date is in ISO or yyyy-MM-dd; treat it as date-only
+    if (!t.due_date) return false;
+    const due = new Date(t.due_date);
+    const today = new Date();
+    return due < today && (t.status ?? 'Not Started') !== 'Completed';
+  });
+
+  const inProgressTasks = tasks.filter(t => (t.status ?? 'Not Started') === 'In Progress');
+
+  const pendingLeavesCount = Number(leave_request?.pending_requests || 0);
+  const totalEmployees = employees.length;
+  const totalTasks = tasks.length;
+
+  const activityItems = React.useMemo(() => {
+    const items = [];
+
+    // Overdue tasks (top 3)
+    overdueTasks
+      .sort((a, b) => new Date(b.due_date || 0) - new Date(a.due_date || 0))
+      .slice(0, 3)
+      .forEach(t => {
+        items.push({
+          id: `overdue-${t.task_id}`,
+          icon: "bi bi-exclamation-triangle-fill text-danger",
+          title: "Overdue task",
+          message: `#${String(t.task_id).padStart(3, "0")} — ${t.title}`,
+          when: t.due_date ? new Date(t.due_date).toLocaleDateString() : "",
+          href: "#task", // jump to tasks section
+        });
+      });
+
+    // In-progress tasks (top 3)
+    inProgressTasks
+      .sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0))
+      .slice(0, 3)
+      .forEach(t => {
+        items.push({
+          id: `inprog-${t.task_id}`,
+          icon: "bi bi-check2-circle text-primary",
+          title: "Task in progress",
+          message: `#${String(t.task_id).padStart(3, "0")} — ${t.title}`,
+          when: t.updated_at ? new Date(t.updated_at).toLocaleString() : "",
+          href: "#task",
+        });
+      });
+
+    // Pending leaves summary (single tile)
+    if (pendingLeavesCount > 0) {
+      items.push({
+        id: "leave-pending",
+        icon: "bi bi-calendar2-check text-warning",
+        title: "Pending leave requests",
+        message: `${pendingLeavesCount} request(s) awaiting review`,
+        when: new Date().toLocaleString(),
+        href: "/LeaveManager",
+      });
+    }
+
+    // Team snapshot tile (single)
+    items.push({
+      id: "team-snapshot",
+      icon: "bi bi-people-fill text-info",
+      title: "Team snapshot",
+      message: `${totalEmployees} members · ${totalTasks} tasks`,
+      when: new Date().toLocaleString(),
+      href: "#user",
+    });
+
+    return items.slice(0, 6); // cap list size to keep dropdown compact
+    // eslint-disable-next-line
+  }, [overdueTasks.length, inProgressTasks.length, pendingLeavesCount, totalEmployees, totalTasks]);
+
+
+
   // ----------------- Render -----------------
   return (
     <>
@@ -615,7 +765,7 @@ useEffect(() => {
             height="36"
             className="rounded-circle"
           />
-          <span className="fw-semibold">Team Productivity</span>
+          <span className="fw-semibold">Team Productivity Dashboard</span>
         </a>
         <ul className="navbar-nav flex-row d-md-none ms-auto">
           {/* Toggle search */}
@@ -662,23 +812,44 @@ useEffect(() => {
             <div className="d-md-flex flex-column p-0 pt-lg-3 overflow-y-auto" style={{ minHeight: '94vh' }}>
               <ul className="nav flex-column">
                 <li className="nav-item">
-                  <a className="nav-link d-flex align-items-center gap-2 active" style={{ textTransform: 'capitalize' }} aria-current="page" href="/manager-dashboard">
+                  <a className="nav-link d-flex align-items-center gap-2 active" style={{ textTransform: 'capitalize' }} aria-current="page" href="/manager-view">
                     <i className="bi bi-house-fill" aria-hidden="true" ></i>
-                    {user.role}  Dashboard
+                    My  Dashboard
                   </a>
                 </li>
                 <li className="nav-item">
                   <a className="nav-link d-flex align-items-center gap-2" href="#user">
-                    <i className="bi bi-people" aria-hidden="true"></i>
-                    Users
+                    <i className="bi bi-person" aria-hidden="true"></i>
+                    Employee
                   </a>
                 </li>
+
+
+                <li className="nav-item">
+                  <button className="nav-link d-flex align-items-center gap-2" onClick={ShowMembers}>
+                    <i className="bi bi-people-fill me-1"></i>Team Member
+                  </button>
+                </li>
+
+
+
+
+
+
                 <li className="nav-item">
                   <a className="nav-link d-flex align-items-center gap-2" href="#task">
                     <i className="bi bi-graph-up" aria-hidden="true"></i>
                     Reports / Tasks
                   </a>
                 </li>
+
+                <li className="nav-item">
+                  <a className="nav-link d-flex align-items-center gap-2" href="#performance">
+                    <i className="bi bi-trophy" aria-hidden="true"></i>
+                    Top Performers
+                  </a>
+                </li>
+
                 <li className="nav-item">
                   <a className="nav-link d-flex align-items-center gap-2" href="/LeaveManager">
                     <i className="bi bi-calendar3" aria-hidden="true"></i>
@@ -688,7 +859,7 @@ useEffect(() => {
                 <li className="nav-item">
                   <a className="nav-link d-flex align-items-center gap-2" href="/common-review">
                     <i className="bi bi-list-check" aria-hidden="true"></i>
-                    Common Review
+                    Team Review
                   </a>
                 </li>
                 <li className="nav-item">
@@ -776,15 +947,15 @@ useEffect(() => {
             <div className="offcanvas-body d-flex flex-column p-0 pt-lg-3 overflow-y-auto">
               <ul className="nav flex-column">
                 <li className="nav-item">
-                  <a className="nav-link d-flex align-items-center gap-2 active" aria-current="page" href="#dashboard">
+                  <a className="nav-link d-flex align-items-center gap-2 active" aria-current="page" href="/manager-view">
                     <i className="bi bi-house-fill" aria-hidden="true"></i>
-                    Dashboard
+                    My Dashboard
                   </a>
                 </li>
                 <li className="nav-item">
                   <a className="nav-link d-flex align-items-center gap-2" href="#user">
                     <i className="bi bi-people" aria-hidden="true"></i>
-                    Users
+                    Employee
                   </a>
                 </li>
                 <li className="nav-item">
@@ -800,9 +971,15 @@ useEffect(() => {
                   </a>
                 </li>
                 <li className="nav-item">
+                  <a className="nav-link d-flex align-items-center gap-2" href="#performance">
+                    <i className="bi bi-trophy" aria-hidden="true"></i>
+                    Top Performers
+                  </a>
+                </li>
+                <li className="nav-item">
                   <a className="nav-link d-flex align-items-center gap-2" href="/common-review">
                     <i className="bi bi-list-check" aria-hidden="true"></i>
-                    Common Review
+                    Team Review
                   </a>
                 </li>
                 <li className="nav-item">
@@ -866,67 +1043,67 @@ useEffect(() => {
 
 
 
-{/* Update Password Modal */}
-<div className="modal fade" id="updatePasswordModal" tabIndex="-1" aria-hidden="true">
-  <div className="modal-dialog modal-dialog-centered">
-    <div className="modal-content">
-      <div className="modal-header bg-secondary text-white">
-        <h5 className="modal-title">
-          <i className="bi bi-key-fill me-2"></i> Update Password
-        </h5>
-        <button type="button" className="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div className="modal-body">
-        <form onSubmit={handleUpdatePassword} noValidate>
-          <div className="mb-3">
-            <label className="form-label">Current Password</label>
-            <input
-              type="password"
-              className="form-control"
-              value={pwdForm.current_password}
-              onChange={(e) => setPwdForm({ ...pwdForm, current_password: e.target.value })}
-              required
-            />
-          </div>
-          <div className="mb-3">
-            <label className="form-label">New Password</label>
-            <input
-              type="password"
-              className="form-control"
-              placeholder="At least 8 characters"
-              value={pwdForm.new_password}
-              onChange={(e) => setPwdForm({ ...pwdForm, new_password: e.target.value })}
-              required
-            />
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Confirm New Password</label>
-            <input
-              type="password"
-              className="form-control"
-              value={pwdForm.confirm_password}
-              onChange={(e) => setPwdForm({ ...pwdForm, confirm_password: e.target.value })}
-              required
-            />
-          </div>
+          {/* Update Password Modal */}
+          <div className="modal fade" id="updatePasswordModal" tabIndex="-1" aria-hidden="true">
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content">
+                <div className="modal-header bg-secondary text-white">
+                  <h5 className="modal-title">
+                    <i className="bi bi-key-fill me-2"></i> Update Password
+                  </h5>
+                  <button type="button" className="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div className="modal-body">
+                  <form onSubmit={handleUpdatePassword} noValidate>
+                    <div className="mb-3">
+                      <label className="form-label">Current Password</label>
+                      <input
+                        type="password"
+                        className="form-control"
+                        value={pwdForm.current_password}
+                        onChange={(e) => setPwdForm({ ...pwdForm, current_password: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label">New Password</label>
+                      <input
+                        type="password"
+                        className="form-control"
+                        placeholder="At least 8 characters"
+                        value={pwdForm.new_password}
+                        onChange={(e) => setPwdForm({ ...pwdForm, new_password: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label">Confirm New Password</label>
+                      <input
+                        type="password"
+                        className="form-control"
+                        value={pwdForm.confirm_password}
+                        onChange={(e) => setPwdForm({ ...pwdForm, confirm_password: e.target.value })}
+                        required
+                      />
+                    </div>
 
-          {pwdMessage && (
-            <div className={`alert ${pwdMessage.startsWith('✅') ? 'alert-success' : 'alert-warning'}`} role="alert">
-              {pwdMessage}
+                    {pwdMessage && (
+                      <div className={`alert ${pwdMessage.startsWith('✅') ? 'alert-success' : 'alert-warning'}`} role="alert">
+                        {pwdMessage}
+                      </div>
+                    )}
+
+                    <div className="d-flex gap-2">
+                      <button type="submit" className="btn btn-primary w-100" disabled={pwdSubmitting}>
+                        {pwdSubmitting ? 'Updating…' : 'Update Password'}
+                      </button>
+                      <button type="button" className="btn btn-warning w-100" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
             </div>
-          )}
-
-          <div className="d-flex gap-2">
-            <button type="submit" className="btn btn-secondary w-100" disabled={pwdSubmitting}>
-              {pwdSubmitting ? 'Updating…' : 'Update Password'}
-            </button>
-            <button type="button" className="btn btn-light w-100" data-bs-dismiss="modal">Cancel</button>
           </div>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
 
 
 
@@ -945,8 +1122,80 @@ useEffect(() => {
               </h4>
               <div className="btn-toolbar mb-2 mb-md-0">
                 <div className="btn-group me-2">
-                  <button type="button" className="btn btn-sm btn-outline-secondary">Share</button>
-                  <button type="button" className="btn btn-sm btn-outline-secondary">Export</button>
+
+
+                  {/* <button type="button" className="btn btn-sm btn-outline-secondary">Export</button> */}
+
+
+                  {/* Activity dropdown (minimal, derived from existing state) */}
+                  <div className="dropdown">
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-secondary dropdown-toggle position-relative"
+                      id="activityDropdown"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                    >
+                      <i className="bi bi-activity me-1" />
+                      Activity
+                      {/* Badge shows total items; cap at 99 */}
+                      {activityItems.length > 0 && (
+                        <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                          {Math.min(activityItems.length, 99)}
+                          <span className="visually-hidden">activity items</span>
+                        </span>
+                      )}
+                    </button>
+
+                    <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="activityDropdown" style={{ minWidth: 340 }}>
+                      <li className="dropdown-header d-flex justify-content-between align-items-center">
+                        <span>Recent Activity</span>
+                        <button
+                          className="btn btn-link btn-sm p-0"
+                          type="button"
+                          onClick={() => {
+                            // No-op refresh; you can trigger any existing refetches if desired
+                            // e.g., re-run chart/task fetches, or simply rely on state updates elsewhere
+                          }}
+                        >
+                          Refresh
+                        </button>
+                      </li>
+                      <li><hr className="dropdown-divider" /></li>
+
+                      {activityItems.length === 0 ? (
+                        <li className="px-3 py-2 text-muted small">No activity</li>
+                      ) : (
+                        activityItems.map(item => (
+                          <li key={item.id}>
+                            <a className="dropdown-item d-flex align-items-start gap-2" href={item.href}>
+                              <i className={`${item.icon} mt-1`} />
+                              <div className="flex-grow-1">
+                                <div className="fw-semibold">{item.title}</div>
+                                {item.message && <div className="small text-muted">{item.message}</div>}
+                                {item.when && <div className="small text-muted">{item.when}</div>}
+                              </div>
+                            </a>
+                          </li>
+                        ))
+                      )}
+
+                      <li><hr className="dropdown-divider" /></li>
+                      <li>
+                        <a className="dropdown-item" href="#task">
+                          View tasks
+                        </a>
+                      </li>
+                      <li>
+                        <a className="dropdown-item" href="/LeaveManager">
+                          Review leaves
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
+
+
+
                 </div>
                 <div class="dropdown">
                   <button
@@ -965,13 +1214,13 @@ useEffect(() => {
                   </button>
                   <ul
                     id="filterMenu"
-                    class="dropdown-menu p-2"
+                    class="dropdown-menu p-1"
                     aria-labelledby="filterToggle"
                   >
                     <li>
                       <button
                         type="button"
-                        class="btn btn-outline-success m-2 dropdown-item"
+                        class="btn btn-outline-success my-1"
                         data-bs-toggle="modal"
                         data-bs-target="#updateProfileModal"
                       > <i className="bi bi-pencil-square me-1"></i>
@@ -984,27 +1233,25 @@ useEffect(() => {
 
 
 
-<button
-  type="button"
-  className="btn btn-outline-secondary dropdown-item"
-  data-bs-toggle="modal"
-  data-bs-target="#updatePasswordModal"
->
-  <i className="bi bi-key-fill me-1"></i> Update Password
-</button>
-
-
-
-
-
-
-
-                      </li>
-                    <li>
-                      <button type="button" className="btn btn-outline-info m-2 dropdown-item" onClick={ShowMembers}>
-                        <i className="bi bi-people-fill me-1"></i>Team Member
+                      <button
+                        type="button"
+                        className="btn btn-outline-danger"
+                        data-bs-toggle="modal"
+                        data-bs-target="#updatePasswordModal"
+                      >
+                        <i className="bi bi-key-fill me-1"></i>Update Password
                       </button>
+
+
+
+
+
+
+
                     </li>
+
+
+
                   </ul>
                 </div>
               </div>
@@ -1102,7 +1349,7 @@ useEffect(() => {
                           type="date"
                           name="doj"
                           className="form-control"
-                          value={userData.doj || ""}
+                          value={userData.doj ? new Date(userData.doj).toISOString().slice(0, 10) : ""}
                           onChange={handleInputChange}
                         />
                       </div>
@@ -1258,7 +1505,7 @@ useEffect(() => {
                           <img
                             src={
                               manager[0]?.profile_picture
-                                ? `http://localhost:5000/uploads/${encodeURIComponent(manager[0]?.profile_picture)}`
+                                ? `${API_BASE_URL}/uploads/${encodeURIComponent(manager[0]?.profile_picture)}`
                                 : 'https://avatar.iran.liara.run/public'
                             }
                             alt="Director"
@@ -1324,31 +1571,67 @@ useEffect(() => {
                 </div>
               </div>
             </div>
-            <div className="row d-flex justify-content-between mt-4">
-              {/* <div id="dashboard" className="mt-5 col-md-7">
+
+            <div className="card my-4">
+              <div className="card-header d-flex justify-content-between align-items-center">
+                {/* <div id="dashboard" className="mt-5 col-md-7">
                 <h4>Team Productivity</h4>
                 <Line data={Data} options={options} />
               </div> */}
-              <h5>Task Completion </h5>
-              <div className="col-md-7">
-                <Line data={lineData} options={lineOptions} />
+                <strong>Task Completion</strong>
               </div>
-              <div className="col-md-4">
-                {/* <h4>Task Status Overview</h4> */}
-                <Pie data={pieData} options={pieOptions} />
+              <div className="row">
+
+
+                <div className="card-body col-md-7">
+                  <Line data={lineData} options={lineOptions} />
+                </div>
+                <div className="card-body col-md-4">
+                  {/* <h4>Task Status Overview</h4> */}
+                  <Pie data={pieData} options={pieOptions} />
+                </div>
+
               </div>
             </div>
+
             {/* Sales Line (demo) */}
             {/* <div id="dashboard" className="mt-5">
                         <h4>Team Productivity</h4>
                         <Bar data={Data}
                         />
                 </div> */}
+
+
+
+
+
+
+
+
             {/* Team Productivity (Bar) */}
-            <div id="dashboard" className="mt-5 ">
+            {/* <div id="dashboard" className="mt-5 ">
               <h5>Task Distribution</h5>
               <Bar data={chartData} />
+            </div> */}
+
+
+
+            <div className="card">
+              <div className="card-header d-flex justify-content-between align-items-center">
+                <strong>Task Distribution</strong>
+                <span className="text-muted small">
+                  {loading ? "Loading…" : error ? <span className="text-danger">{error}</span> : "Legend shows severity bands"}
+                </span>
+              </div>
+              <div className="card-body" style={{ height: 380 }}>
+                <Bar data={chartData} options={options} />
+              </div>
             </div>
+
+
+
+
+
             {/* <canvas ref={productivityBarRef} aria-label="Team productivity bar chart"></canvas> */}
             {/* Employees table */}
             <div id="user" className="card shadow-sm p-3 mt-4">
@@ -1359,7 +1642,7 @@ useEffect(() => {
                   className="rounded-circle me-3"
                   width="50"
                 />
-                <h5 className="mb-0">Employees Reporting to {user?.firstname} {user?.lastname}</h5>
+                <h5 className="mb-0">Employee Reporting to {user?.firstname} {user?.lastname}</h5>
               </div>
               <div className="card-header d-flex justify-content-between align-items-center">
                 <span>Active Users</span>
@@ -1610,180 +1893,179 @@ useEffect(() => {
 
 
 
-    <div className="card shadow-sm p-3 mt-4">
-      <div className="card-header bg-dark text-white">
-        <i className="bi bi-trophy me-2" />
-        Top Performers (Skills)
-      </div>
+            <div id="performance" className="card shadow-sm p-3 mt-4">
+              <div className="card-header bg-dark text-white">
+                <i className="bi bi-trophy me-2" />
+                Top Performers (Skills)
+              </div>
 
-      <div className="table-responsive">
-        <table className="table table-sm table-hover align-middle bg-white mb-0">
-          <thead className="table-light">
-            <tr>
-              <th>Rank</th>
-              <th>Employee</th>
-              <th>Composite Score</th>
-              <th>Skills</th>
-              <th>Details</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {leaderboard.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="text-muted small text-center py-3">
-                  No skills found for your team.
-                </td>
-              </tr>
-            ) : (
-              leaderboard.map(({ employee, score }, idx) => {
-                const skills = skillMatrix[employee.EmployeeId] || {};
-                const skillEntries = Object.entries(skills);
-
-                const quickChips = skillEntries
-                  .sort((a, b) => b[1].prof - a[1].prof)
-                  .slice(0, 4)
-                  .map(([name, s]) => (
-                    <span key={name} className="badge rounded-pill text-bg-light me-1 mb-1">
-                      {name} <span className="fw-semibold">{s.prof}%</span>
-                      {s.cert && (
-                        <i className="bi bi-award ms-1 text-primary" title="Certified" />
-                      )}
-                    </span>
-                  ));
-
-                const isExpanded = expandedEmployeeId === employee.EmployeeId;
-
-                return (
-                  <React.Fragment key={employee.EmployeeId}>
-                    {/* main row */}
+              <div className="table-responsive">
+                <table className="table table-sm table-hover align-middle bg-white mb-0">
+                  <thead className="table-light">
                     <tr>
-                      <td>
-                        <span className="badge bg-secondary">{idx + 1}</span>
-                      </td>
-                      <td>
-                        <div className="d-flex align-items-center gap-2">
-                          <img
-                            src={employee.profile_picture_url || "https://avatar.iran.liara.run/public"}
-                            alt="Profile"
-                            className="rounded-circle"
-                            width="32"
-                            height="32"
-                            style={{ objectFit: "cover" }}
-                          />
-                          <div>
-                            <div className="fw-semibold">
-                              {employee.firstname} {employee.lastname}
-                            </div>
-                            <div className="text-muted small">
-                              {employee.post || employee.designation || "—"} · {employee.location || "—"}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="fw-bold">{score}</td>
-                      <td>
-                        {quickChips.length > 0 ? (
-                          quickChips
-                        ) : (
-                          <span className="text-muted small">No skills</span>
-                        )}
-                      </td>
-                      <td>
-                        {skillEntries.length > 0 ? (
-                          <button
-                            type="button"
-                            className={`btn btn-sm ${isExpanded ? "btn-primary" : "btn-outline-primary"}`}
-                            onClick={() => toggleRow(employee.EmployeeId)}
-                            aria-expanded={isExpanded}
-                            aria-controls={`skills-panel-${employee.EmployeeId}`}
-                          >
-                            <i className="bi bi-list-check me-1" />
-                            {isExpanded ? "Hide" : "View All"}
-                          </button>
-                        ) : (
-                          <span className="text-muted small">—</span>
-                        )}
-                      </td>
+                      <th>Rank</th>
+                      <th>Employee</th>
+                      <th>Composite Score</th>
+                      <th>Skills</th>
+                      <th>Details</th>
                     </tr>
+                  </thead>
 
-                    {/* inline details panel (single row, below the main row) */}
-                    {isExpanded && (
-                      <tr id={`skills-panel-${employee.EmployeeId}`}>
-                        <td colSpan={5}>
-                          <div className="p-2 border rounded bg-light">
-                            <div className="table-responsive">
-                              <table className="table table-sm table-bordered align-middle mb-0">
-                                <thead className="table-light">
-                                  <tr>
-                                    <th style={{ width: "30%" }}>Skill</th>
-                                    <th style={{ width: "12%" }}>Proficiency</th>
-                                    <th style={{ width: "28%" }}>Progress</th>
-                                    <th style={{ width: "12%" }}>Years</th>
-                                    <th style={{ width: "18%" }}>Certificate</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {skillEntries
-                                    .sort((a, b) => b[1].prof - a[1].prof)
-                                    .map(([name, s]) => (
-                                      <tr key={`${employee.EmployeeId}-${name}`}>
-                                        <td className="fw-semibold">{name}</td>
-                                        <td className="fw-bold">{s.prof}%</td>
-                                        <td>
-                                          <div className="progress" style={{ height: 6 }}>
-                                            <div
-                                              className={`progress-bar ${
-                                                s.prof >= 80
-                                                  ? "bg-success"
-                                                  : s.prof >= 50
-                                                  ? "bg-warning"
-                                                  : "bg-danger"
-                                              }`}
-                                              style={{ width: `${s.prof}%` }}
-                                              aria-valuenow={s.prof}
-                                              aria-valuemin={0}
-                                              aria-valuemax={100}
-                                            />
-                                          </div>
-                                        </td>
-                                        <td>
-                                          <span className="badge rounded-pill text-bg-light">
-                                            {(s.years ?? 0)} years
-                                          </span>
-                                        </td>
-                                        <td>
-                                          {s.cert ? (
-                                            <a
-                                              href={s.cert}
-                                              className="btn btn-sm btn-outline-primary"
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                            >
-                                              <i className="bi bi-award me-1" />
-                                              View
-                                            </a>
-                                          ) : (
-                                            <span className="text-muted small">—</span>
-                                          )}
-                                        </td>
-                                      </tr>
-                                    ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          </div>
+                  <tbody>
+                    {leaderboard.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="text-muted small text-center py-3">
+                          No skills found for your team.
                         </td>
                       </tr>
+                    ) : (
+                      leaderboard.map(({ employee, score }, idx) => {
+                        const skills = skillMatrix[employee.EmployeeId] || {};
+                        const skillEntries = Object.entries(skills);
+
+                        const quickChips = skillEntries
+                          .sort((a, b) => b[1].prof - a[1].prof)
+                          .slice(0, 4)
+                          .map(([name, s]) => (
+                            <span key={name} className="badge rounded-pill text-bg-light me-1 mb-1">
+                              {name} <span className="fw-semibold">{s.prof}%</span>
+                              {s.cert && (
+                                <i className="bi bi-award ms-1 text-primary" title="Certified" />
+                              )}
+                            </span>
+                          ));
+
+                        const isExpanded = expandedEmployeeId === employee.EmployeeId;
+
+                        return (
+                          <React.Fragment key={employee.EmployeeId}>
+                            {/* main row */}
+                            <tr>
+                              <td>
+                                <span className="badge bg-secondary">{idx + 1}</span>
+                              </td>
+                              <td>
+                                <div className="d-flex align-items-center gap-2">
+                                  <img
+                                    src={employee.profile_picture_url || "https://avatar.iran.liara.run/public"}
+                                    alt="Profile"
+                                    className="rounded-circle"
+                                    width="32"
+                                    height="32"
+                                    style={{ objectFit: "cover" }}
+                                  />
+                                  <div>
+                                    <div className="fw-semibold">
+                                      {employee.firstname} {employee.lastname}
+                                    </div>
+                                    <div className="text-muted small">
+                                      {employee.post || employee.designation || "—"} · {employee.location || "—"}
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="fw-bold">{score}</td>
+                              <td>
+                                {quickChips.length > 0 ? (
+                                  quickChips
+                                ) : (
+                                  <span className="text-muted small">No skills</span>
+                                )}
+                              </td>
+                              <td>
+                                {skillEntries.length > 0 ? (
+                                  <button
+                                    type="button"
+                                    className={`btn btn-sm ${isExpanded ? "btn-primary" : "btn-outline-primary"}`}
+                                    onClick={() => toggleRow(employee.EmployeeId)}
+                                    aria-expanded={isExpanded}
+                                    aria-controls={`skills-panel-${employee.EmployeeId}`}
+                                  >
+                                    <i className="bi bi-list-check me-1" />
+                                    {isExpanded ? "Hide" : "View All"}
+                                  </button>
+                                ) : (
+                                  <span className="text-muted small">—</span>
+                                )}
+                              </td>
+                            </tr>
+
+                            {/* inline details panel (single row, below the main row) */}
+                            {isExpanded && (
+                              <tr id={`skills-panel-${employee.EmployeeId}`}>
+                                <td colSpan={5}>
+                                  <div className="p-2 border rounded bg-light">
+                                    <div className="table-responsive">
+                                      <table className="table table-sm table-bordered align-middle mb-0">
+                                        <thead className="table-light">
+                                          <tr>
+                                            <th style={{ width: "30%" }}>Skill</th>
+                                            <th style={{ width: "12%" }}>Proficiency</th>
+                                            <th style={{ width: "28%" }}>Progress</th>
+                                            <th style={{ width: "12%" }}>Years</th>
+                                            <th style={{ width: "18%" }}>Certificate</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {skillEntries
+                                            .sort((a, b) => b[1].prof - a[1].prof)
+                                            .map(([name, s]) => (
+                                              <tr key={`${employee.EmployeeId}-${name}`}>
+                                                <td className="fw-semibold">{name}</td>
+                                                <td className="fw-bold">{s.prof}%</td>
+                                                <td>
+                                                  <div className="progress" style={{ height: 6 }}>
+                                                    <div
+                                                      className={`progress-bar ${s.prof >= 80
+                                                        ? "bg-success"
+                                                        : s.prof >= 50
+                                                          ? "bg-warning"
+                                                          : "bg-danger"
+                                                        }`}
+                                                      style={{ width: `${s.prof}%` }}
+                                                      aria-valuenow={s.prof}
+                                                      aria-valuemin={0}
+                                                      aria-valuemax={100}
+                                                    />
+                                                  </div>
+                                                </td>
+                                                <td>
+                                                  <span className="badge rounded-pill text-bg-light">
+                                                    {(s.years ?? 0)} years
+                                                  </span>
+                                                </td>
+                                                <td>
+                                                  {s.cert ? (
+                                                    <a
+                                                      href={s.cert}
+                                                      className="btn btn-sm btn-outline-primary"
+                                                      target="_blank"
+                                                      rel="noopener noreferrer"
+                                                    >
+                                                      <i className="bi bi-award me-1" />
+                                                      View
+                                                    </a>
+                                                  ) : (
+                                                    <span className="text-muted small">—</span>
+                                                  )}
+                                                </td>
+                                              </tr>
+                                            ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        );
+                      })
                     )}
-                  </React.Fragment>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
 
 

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+const API_BASE_URL = 'http://localhost:5000';
 const AddMember = () => {
   const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem('loggedInUser'));
@@ -19,7 +20,8 @@ const AddMember = () => {
   const designations = [
     "Data Analyst", "Software Engineer", "Business Analyst", "Project Manager",
     "UI Designer", "QA Engineer", "DevOps Engineer", "HR Executive",
-    "Team Lead", "Scrum Master", "Product Owner", "Data Scientist"
+    "Team Lead", "Scrum Master", "Product Owner", "Data Scientist","Data Engineering Analyst",
+    "AI/ML Engineering", "Data Engineering Consultant", "Sr. Software Engineer"
   ];
   const locations = [
     "Gurugram", "Mumbai", "Bangalore", "Delhi", "Hyderabad", "Pune", "Chennai", "Kolkata"
@@ -36,7 +38,7 @@ const AddMember = () => {
       const data = new FormData();
       Object.keys(formData).forEach(key => data.append(key, formData[key]));
       if (profilePicture) data.append('profile_picture', profilePicture);
-      const response = await fetch("http://localhost:5000/api/add-member", {
+      const response = await fetch(`${API_BASE_URL}/api/add-member`, {
         method: "POST",
         body: data
       });

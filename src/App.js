@@ -19,6 +19,7 @@ import Support from "./pages/Support";
 import Docs from "./pages/Document";
 
 import { RequireAuth, RequireRole } from "./auth/RouteGuards";
+import ManagerView from "./View/Manager/ManagerView";
 
 function App() {
   return (
@@ -43,6 +44,7 @@ function App() {
             {/* Example: allow only 'manager' role and director level 1 */}
             <Route element={<RequireRole allow={["manager", 1]} />}>
               <Route path="/manager-dashboard" element={<ManagerDashboard />} />
+              <Route path="/manager-view" element={<ManagerView />} />
               <Route path="/add-member" element={<AddMember />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/QuestionManager" element={<QuestionManager />} />

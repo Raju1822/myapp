@@ -13,7 +13,7 @@ import {
 } from 'chart.js';
 import { Line, Bar } from 'react-chartjs-2';
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend);
-const API_BASE = 'http://localhost:5000';
+const API_BASE_URL = 'http://localhost:5000';
 const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const CommonReview = () => {
     const navigate = useNavigate();
@@ -38,7 +38,7 @@ const CommonReview = () => {
     });
     // Pull questions
     useEffect(() => {
-        fetch(`${API_BASE}/api/review-questions`)
+        fetch(`${API_BASE_URL}/api/review-questions`)
             .then(res => res.json())
             .then(qs => setQuestions(qs))
             .catch(err => console.error('Questions load error', err));
@@ -46,7 +46,7 @@ const CommonReview = () => {
     // Pull review status for employees under this manager
     useEffect(() => {
         if (!user?.EmployeeId) return;
-        fetch(`${API_BASE}/api/review-status/${user.EmployeeId}`)
+        fetch(`${API_BASE_URL}/api/review-status/${user.EmployeeId}`)
             .then(res => res.json())
             .then(payload => {
                 // Expect shape like:
@@ -107,7 +107,7 @@ const CommonReview = () => {
             answers
         };
         try {
-            const res = await fetch(`${API_BASE}/api/add-review`, {
+            const res = await fetch(`${API_BASE_URL}/api/add-review`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -119,7 +119,7 @@ const CommonReview = () => {
             }
             alert('Review submitted successfully');
             // refresh status
-            const statusRes = await fetch(`${API_BASE}/api/review-status/${user.EmployeeId}`);
+            const statusRes = await fetch(`${API_BASE_URL}/api/review-status/${user.EmployeeId}`);
             const statusData = await statusRes.json();
             setEmployees(statusData.employees || []);
             setStatusMonthly(statusData.monthly || []);
@@ -157,7 +157,7 @@ const CommonReview = () => {
             setLoading(true);
             setError('');
             try {
-                const res = await fetch(`${API_BASE}/api/reviews/${user.EmployeeId}`);
+                const res = await fetch(`${API_BASE_URL}/api/reviews/${user.EmployeeId}`);
                 const data = await res.json();
                 if (!Array.isArray(data)) {
                     setReviews([]);
