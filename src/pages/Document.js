@@ -280,6 +280,7 @@ const Document = () => {
 
  <nav className="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm sticky-top">
     <div className="container">
+
       <a className="navbar-brand d-flex align-items-center gap-2" href="/">
         <img
           src={brand}
