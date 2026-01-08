@@ -51,7 +51,7 @@ function App() {
           </Route>
 
           {/* ===== 404 fallback ===== */}
-          <Route path="*" element={<Welcome />} />
+          <Route path="*" element={<Welcome />}/>
         </Routes>
       </BrowserRouter>
     </div>
