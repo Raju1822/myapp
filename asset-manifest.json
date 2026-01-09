@@ -1,0 +1,25 @@
+{
+  "files": {
+    "main.css": "/myapp/static/css/main.8884da41.css",
+    "main.js": "/myapp/static/js/main.17ad5eb3.js",
+    "static/js/453.9799b89c.chunk.js": "/myapp/static/js/453.9799b89c.chunk.js",
+    "static/media/exam.png": "/myapp/static/media/exam.44556a81e6dc516c54b9.png",
+    "static/media/welcome.png": "/myapp/static/media/welcome.edf00f1d65f071944fe7.png",
+    "static/media/member-dashboard.png": "/myapp/static/media/member-dashboard.4f8fbf7ec7bd39761085.png",
+    "static/media/cr-member.png": "/myapp/static/media/cr-member.757b103c908da29a7761.png",
+    "static/media/manager-dashboard.png": "/myapp/static/media/manager-dashboard.28ca0978fe0ddbb3c9e2.png",
+    "static/media/cr-manager.png": "/myapp/static/media/cr-manager.926d02f440d32e238715.png",
+    "static/media/question.png": "/myapp/static/media/question.8435c6e8fea2f9ff2e50.png",
+    "static/media/leave-manager.png": "/myapp/static/media/leave-manager.84f652d1b4e5f4d4bbda.png",
+    "static/media/placeholder-img.jpg": "/myapp/static/media/placeholder-img.4c40be7639f77c391fb4.jpg",
+    "static/media/logo.svg": "/myapp/static/media/logo.6ce24c58023cc2f8fd88fe9d219db6c6.svg",
+    "index.html": "/myapp/index.html",
+    "main.8884da41.css.map": "/myapp/static/css/main.8884da41.css.map",
+    "main.17ad5eb3.js.map": "/myapp/static/js/main.17ad5eb3.js.map",
+    "453.9799b89c.chunk.js.map": "/myapp/static/js/453.9799b89c.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.8884da41.css",
+    "static/js/main.17ad5eb3.js"
+  ]
+}
