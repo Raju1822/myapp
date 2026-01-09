@@ -1,70 +1,40 @@
-# Getting Started with Create React App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Team Productivity Platform
 
-## Available Scripts
+A full‑stack application that unifies **task management**, **skills assessment**, **leave tracking**, and **performance reviews**—built with a **React SPA** frontend, **Node.js (HTTP)** backend, and **SQL Server** database.
 
-In the project directory, you can run:
+> This repository contains the executive documentation UI along with architecture, ERD, flows, API catalog, and screenshot gallery.
 
-### `npm start`
+---
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## ✨ Features
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- 🔐 Authentication & role‑based navigation (Director / Manager / Member)
+- 📊 Dashboards for **Member** and **Manager**
+- 🧠 Skill exams with **question bank**, **attempt tracking**, and **PDF certificates**
+- ✅ Task creation, assignment, status updates, progress tracking
+- 🗓️ Leave manager: apply, approve/reject, summaries & holidays
+- 📝 Common review (Monthly/Yearly) with ratings and analytics
+- 🖼️ Asset uploads (profile pictures, certificates) served securely
+- 📈 KPI & SQL examples for quick analytics
 
-### `npm test`
+---
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 🧱 Architecture
 
-### `npm run build`
+**Frontend:** React SPA (Router, Bootstrap, Chart.js, LocalStorage)  
+**Backend:** Node.js (native `http`), CORS, Multer (uploads), PDFKit (certificates)  
+**Database:** SQL Server (`EmpDB`) with normalized tables and FK constraints
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+The app renders the following diagrams in the documentation UI:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+- **System Architecture Diagram** – shows component boundaries and integrations
+- **ER Diagram** – key tables: `users`, `skills`, `user_skills`, `tasks`, `questions`, `options`,  
+  `exam_attempts`, `attempt_answers`, `leave_types`, `leave_requests`, `holidays`,  
+  `employee_reviews`, `review_questions`, `review_answers`
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+> Files (profile pictures, certificates) are stored under `public/uploads` and served via `GET /uploads/<filename>` with path traversal protection.
 
-### `npm run eject`
+---
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## 📂 Directory Structure (indicative)
